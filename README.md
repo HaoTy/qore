@@ -14,19 +14,19 @@ Synopsis TBD
 Member | Email | Photo
 --- | --- | ---
 Xuxin Huang | xxhuang@stanford.edu |  
-Tianyi Hao | tianyih@stanford.edu |  
+Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi Hao" style="width:150px;"/> 
 
 # Team Skills Matrix:
 
-Member | Technical Skills | Non-Technical Skills | Personal Traits | Desired Growth | Weaknesses
---- | --- | --- | --- | --- | ---
-Xuxin |  |  |  |  |  
-Tianyi |  |  |  |  |  
+Member | Skills | Personal Traits | Desired Growth | Weaknesses
+--- | --- | --- | --- | ---
+Xuxin |  |  |  |  
+Tianyi | Python, quantum simulation, tensor algebra | O: curious, C: organized, E: reserved, A: neutral, N: sensitive | Deeper understanding of quantum algorithms | Time management 
 
 
 # Team Communication:
 1. Email/Slack: TBD
 
-3. Documentation: TBD
+3. Documentation: [Github Wiki](https://github.com/cs210/IBM-QC-Open-Pit-Mining/wiki).
 
 4. Calendar: TBD

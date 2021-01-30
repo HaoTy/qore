@@ -1,12 +1,12 @@
-# Project Name
+# Q Ore
 
-> Here should be a logo
+<img src="assets/logo.png" alt="Q Ore" width="150"/>
 
-Synopsis TBD
+Q Ore leverages quantum power to speedup open pit mining algorithms.
 
 [Project Theme Document](https://github.com/cs210/IBM-QC-Open-Pit-Mining/blob/main/IBM-Quantum-OpenPitMining-v2.pdf)
 
-[Team Song]() TBD
+[Team Song](https://youtu.be/Lyu7-Jcyl_8)
 
 [Code Repository]() TBD
 

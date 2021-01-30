@@ -14,7 +14,7 @@ Synopsis TBD
 Member | Email | Photo
 --- | --- | ---
 Xuxin Huang | xxhuang@stanford.edu |  
-Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi Hao" style="width:150px;"/> 
+Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi Hao" width="150"/> 
 
 # Team Skills Matrix:
 

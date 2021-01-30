@@ -1,6 +1,6 @@
 # Q Ore
 
-<img src="assets/logo.png" alt="Q Ore" width="150"/>
+<img src="assets/logo.png" alt="Q Ore" width="300"/>
 
 Q Ore leverages quantum power to speedup open pit mining algorithms.
 

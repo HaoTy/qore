@@ -15,6 +15,7 @@ Member | Email | Photo
 --- | --- | ---
 Xuxin Huang | xxhuang@stanford.edu | <img src="assets/hxx.jpg" alt="Xuxin Huang" width="150"/>  
 Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi Hao" width="150"/> 
+Chunjing Jia | chunjing@stanford.edu | <img src="assets/jiacj.jpg" alt="Chunjing Jia" width="150"/> 
 
 # Team Skills Matrix:
 
@@ -22,6 +23,7 @@ Member | Skills | Personal Traits | Desired Growth | Weaknesses
 --- | --- | --- | --- | ---
 Xuxin | Python, C++, quantum physics | logical, motivated, flexible, optimistic, chill | Quantum algorithms and project management | Project management 
 Tianyi | Python, quantum simulation, tensor algebra | O: curious, C: organized, E: reserved, A: neutral, N: sensitive | Deeper understanding of quantum algorithms | Time management 
+Chunjing | Python, C++, quantum physics | motivated, curious, agreeable, flexible | implementation of quantum algorithms, project management | self-criticism
 
 
 # Team Communication:

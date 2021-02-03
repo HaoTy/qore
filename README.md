@@ -15,7 +15,8 @@ Member | Email | Photo
 --- | --- | ---
 Xuxin Huang | xxhuang@stanford.edu | <img src="assets/hxx.jpg" alt="Xuxin Huang" width="150"/>  
 Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi Hao" width="150"/> 
-Chunjing Jia | chunjing@stanford.edu | <img src="assets/jiacj.png" alt="Chunjing Jia" width="150"/> 
+Chunjing Jia | chunjing@stanford.edu | <img src="assets/jiacj.png" alt="Chunjing Jia" width="150"/>
+Cheng Peng | cpeng18@stanford.edu | <img src="assets/cpeng.jpg" alt="Cheng Peng" width="150"/>
 
 # Team Skills Matrix:
 

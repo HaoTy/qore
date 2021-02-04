@@ -25,7 +25,7 @@ Member | Skills | Personal Traits | Desired Growth | Weaknesses
 Xuxin | Python, C++, quantum physics | logical, motivated, flexible, optimistic, chill | Quantum algorithms and project management | Project management 
 Tianyi | Python, quantum simulation, tensor algebra | O: curious, C: organized, E: reserved, A: neutral, N: sensitive | Deeper understanding of quantum algorithms | Time management 
 Chunjing | Python, C++, quantum physics | motivated, curious, agreeable, flexible | implementation of quantum algorithms, project management | self-criticism
-Cheng　｜　Matlab, C++, tensor algorithms, quantum physics　｜　Learner, inquisitive, ideation, collaborative　｜　Using quantum computing method to solve real problems in industry.　｜　Language skills
+Cheng | Matlab, C++, tensor algorithms, quantum physics | Learner, inquisitive, ideation, collaborative | Using quantum computing method to solve real problems in industry. | Language skills
 
 # Team Communication:
 1. Email/Slack: TBD

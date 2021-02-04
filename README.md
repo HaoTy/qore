@@ -8,7 +8,7 @@ Q Ore leverages quantum power to speedup open pit mining algorithms.
 
 [Team Song](https://youtu.be/Lyu7-Jcyl_8)
 
-[Code Repository]() TBD
+[Code Repository](https://github.com/cs210/IBM-Quantum-Mining-Coding-Repo)
 
 # Team Members
 Member | Email | Photo
@@ -28,7 +28,7 @@ Chunjing | Python, C++, quantum physics | motivated, curious, agreeable, flexibl
 Cheng | Matlab, C++, tensor algorithms, quantum physics | Learner, inquisitive, ideation, collaborative | Using quantum computing method to solve real problems in industry. | Language skills
 
 # Team Communication:
-1. Email/Slack: TBD
+1. Slack: Join [here](stanford-pwzk.slack.com) if you have a Stanford email, or email [Tianyi](tianyih@stanford.edu) to get an invitation to create a guest account.
 
 3. Documentation: [Github Wiki](https://github.com/cs210/IBM-QC-Open-Pit-Mining/wiki).
 

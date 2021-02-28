@@ -4,13 +4,20 @@
 
 Q Ore leverages quantum power to speedup open pit mining algorithms.
 
-[Project Theme Document](https://github.com/cs210/IBM-QC-Open-Pit-Mining/blob/main/IBM-Quantum-OpenPitMining-v2.pdf)
+[Project Theme Document](https://github.com/cs210/IBM-QC-Open-Pit-Mining/blob/main/assets/IBM-Quantum-OpenPitMining-v2.pdf)
 
 [Team Song](https://youtu.be/Lyu7-Jcyl_8)
 
-[Code Repository](https://github.com/cs210/IBM-Quantum-Mining-Coding-Repo)
+<!-- [Code Repository](https://github.com/cs210/IBM-Quantum-Mining-Coding-Repo) -->
 
-# Team Members
+### Installation
+```bash
+git clone https://github.com/cs210/IBM-QC-Open-Pit-Mining.git
+pip install -e ./IBM-QC-Open-Pit-Mining
+```
+
+
+### Team Members
 Member | Email | Photo
 --- | --- | ---
 Xuxin Huang | xxhuang@stanford.edu | <img src="assets/hxx.jpg" alt="Xuxin Huang" width="150"/>  
@@ -18,7 +25,7 @@ Tianyi Hao | tianyih@stanford.edu | <img src="assets/Tianyi_Hao.jpg" alt="Tianyi
 Chunjing Jia | chunjing@stanford.edu | <img src="assets/jiacj.png" alt="Chunjing Jia" width="150"/>
 Cheng Peng | cpeng18@stanford.edu | <img src="assets/cpeng.jpg" alt="Cheng Peng" width="150"/>
 
-# Team Skills Matrix:
+### Team Skills Matrix:
 
 Member | Skills | Personal Traits | Desired Growth | Weaknesses
 --- | --- | --- | --- | ---
@@ -27,7 +34,7 @@ Tianyi | Python, quantum simulation, tensor algebra | O: curious, C: organized, 
 Chunjing | Python, C++, quantum physics | motivated, curious, agreeable, flexible | implementation of quantum algorithms, project management | self-criticism
 Cheng | Matlab, C++, tensor algorithms, quantum physics | Learner, inquisitive, ideation, collaborative | Using quantum computing method to solve real problems in industry. | Language skills
 
-# Team Communication:
+### Team Communication:
 1. Slack: Join [here](stanford-pwzk.slack.com) if you have a Stanford email, or email [Tianyi](tianyih@stanford.edu) to get an invitation to create a guest account.
 
 3. Documentation: [Github Wiki](https://github.com/cs210/IBM-QC-Open-Pit-Mining/wiki).

@@ -10,7 +10,7 @@ H     = Hs-Hp
 print("Hamiltonian operator...")
 print(H.print_details())
 
-# how to run a QAOA calculation
+# how to run a ASP calculation
 
 from qiskit                                        import *
 from qiskit.aqua                                   import aqua_globals

@@ -95,7 +95,7 @@ def generate_hamiltonian(fname,verbose=False):
     Hp = null_operator(h_dict['n'])
     for i in range(h_dict['n']):
         Hp += h_dict['profit'][i]*z_projector(1,i,h_dict['n'])
-    # H smoothness: gamma * \sum_i \sum_{j parent of i} (1-Zi)/2 * (1+Zi)/2
+    # H smoothness: gamma * \sum_i \sum_{j parent of i} (1-Zi)/2 * (1+Zj)/2
     Hs = null_operator(h_dict['n'])
     for i in range(h_dict['n']):
         for j in h_dict['parents'][i]:

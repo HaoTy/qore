@@ -4,13 +4,12 @@ See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
 from typing import Optional, Union, Dict
-from qiskit.aqua.algorithms import AlgorithmResult, QuantumAlgorithm
+from qiskit.aqua.algorithms import QuantumAlgorithm  # , AlgorithmResult
 from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.aqua.components.initial_states import InitialState
 from qiskit.providers import BaseBackend, Backend
-from qiskit.aqua import QuantumInstance
+from qiskit.aqua import QuantumInstance, AquaError
 from qiskit.aqua.operators import OperatorBase, LegacyBaseOperator
-from qiskit.aqua import AquaError
 # import numpy as np
 from qore.utils import single_qubit_pauli, null_operator
 
@@ -24,15 +23,16 @@ class ASP(QuantumAlgorithm):
 
     def __init__(self,
                  H_P: Union[OperatorBase, LegacyBaseOperator],
-                 T: Union(float, int),
+                 evol_time: float,
                  nsteps: int,
                  initial_state: Optional[QuantumCircuit] = None,
                  H_B: Optional[Union[OperatorBase, LegacyBaseOperator]] = None,
-                 quantum_instance: Optional[
-            Union[QuantumInstance, BaseBackend, Backend]] = None) -> None:
+                 quantum_instance: Optional[Union[QuantumInstance,
+                                                  BaseBackend, Backend]] = None
+                 ) -> None:
         super().__init__(quantum_instance)
         self.H_P = H_P
-        self.evol_time = T
+        self.evol_time = evol_time
         self.nsteps = nsteps
         self.initial_state = initial_state.copy() or StandardASPInitialState(
             H_P.num_qubits)

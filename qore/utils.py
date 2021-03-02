@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union, Optional
 from qiskit.quantum_info import Pauli
-from qiskit.aqua.operators import PauliOp, WeightedPauliOperator
+from qiskit.aqua.operators import PauliOp, WeightedPauliOperator, LegacyBaseOperator, PauliExpectation, CircuitSampler, StateFn, CircuitStateFn
 
 
 def identity(n: int, legacy: Optional[bool] = True) -> Union[PauliOp, WeightedPauliOperator]:
@@ -25,3 +25,10 @@ def single_qubit_pauli(direction: str, i: int, n: int, legacy: Optional[bool] = 
     zv = np.asarray(zv, dtype=np.bool)
     xv = np.asarray(xv, dtype=np.bool)
     return WeightedPauliOperator([(1.0, Pauli(zv, xv))]) if legacy else PauliOp(Pauli(zv, xv), coeff=0.0)
+
+
+def measure_operator(H, circuit, instance) -> float:
+    if isinstance(H, LegacyBaseOperator):
+        H = H.to_opflow()
+    return CircuitSampler(instance).convert(PauliExpectation().convert(
+        StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit)))).eval().real

@@ -34,7 +34,6 @@ def get_bitstring_probabilities(circuit,instance,shots):
     for i in range(circ.num_qubits): circ.measure(i,i)
     if(instance.is_statevector): backend = Aer.get_backend('qasm_simulator')
     else:                        backend = instance.backend
-    print(circ)
     result = execute(circ,backend=backend,shots=shots).result().get_counts()
     return {k:result[k]/float(shots) for k in result.keys()}
 

@@ -2,13 +2,14 @@
 
 __docformat__ = 'reStructuredText'
 
-from typing import List, Optional, Union, Tuple
+from typing import List, Union
 from collections import defaultdict
 
 import numpy as np
 from prettytable import PrettyTable
+from qiskit.aqua.operators import PauliOp, WeightedPauliOperator
 
-from .hamiltonian import null_operator, z_projector
+from qore.utils import null_operator, z_projector
 
 
 class Mine:
@@ -31,8 +32,8 @@ class Mine:
         self._init_mapping()
         self.nqubits: int = len(self.idx2cord)
 
-        self.Hs = self._gen_Hs()
-        self.Hp = self._gen_Hp()
+        self.Hs = self.gen_Hs()
+        self.Hp = self.gen_Hp()
 
     def _init_mapping(self) -> None:
         """Assign a unique id to each valid node and store the graph structure with ``self.graph``.
@@ -56,9 +57,9 @@ class Mine:
                             for ic in range(self.cols)])
         print(str(x))
 
-    def _gen_Hs(self):
-        r"""Generate the smoothess Hamiltonian ``Hs``.
-        :math:`H_{s}=\sum_{i}\sum_{j:Parent of i} (1-Z_{i})/2*(1+Z_{j})/2`,
+    def gen_Hs(self) -> Union[PauliOp, WeightedPauliOperator]:
+        r"""Generate the smoothess Hamiltonian 
+        :math:`H_{s}=\sum_{i}\sum_{j:Parent(i)} (1-Z_{i})/2*(1+Z_{j})/2`
         """
         Hs = null_operator(self.nqubits)
         for i in range(self.nqubits):
@@ -67,8 +68,8 @@ class Mine:
                     z_projector(0, j, self.nqubits)
         return Hs
 
-    def _gen_Hp(self):
-        r"""Generate the profit Hamiltonian ``Hp``.
+    def gen_Hp(self) -> Union[PauliOp, WeightedPauliOperator]:
+        r"""Generate the profit Hamiltonian 
         :math:`H_{p}=\sum_{i}w(i)(1-Z_{i})/2`
         """
         Hp = null_operator(self.nqubits)
@@ -76,8 +77,11 @@ class Mine:
             Hp += self.dat[self.idx2cord[i]]*z_projector(1, i, self.nqubits)
         return Hp
 
-    def gen_Hamiltonian(self, penalty: float):
-        """Generate the Hamiltonian H=Hs+penalty*Hp.
+    def gen_Hamiltonian(self, penalty: float) -> Union[PauliOp, WeightedPauliOperator]:
+        r"""Generate the Hamiltonian with penalty weight :math:`\gamma`.
+
+        :math:`H=H_{s}+\gamma H_{p}`
+
         :param penalty: penalty for the smoothness term in the Hamiltonian 
         :type penalty: float
         """

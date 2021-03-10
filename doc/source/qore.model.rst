@@ -4,14 +4,6 @@ qore.model package
 Submodules
 ----------
 
-qore.model.hamiltonian module
------------------------------
-
-.. automodule:: qore.model.hamiltonian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 qore.model.io module
 --------------------
 

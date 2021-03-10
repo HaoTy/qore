@@ -17,13 +17,22 @@ class Mine:
 
     def __init__(self, mine_config: str = '') -> None:
         """Initialize the Mine class.
-        :param mine_config: path to a .txt file which stores the mine configuration 
-        :type mine_config: str
+
+        Parameters
+        ----------
+        mine_config : str
+            Path to the mine configuration file.
+
+        Raises
+        ------
+        IOError
+            Invalid path to the mine configuration file.
+
         """
         try:
             self.dat = np.loadtxt(mine_config)
         except:
-            raise Exception('Invalid Mine Configuration File')
+            raise IOError('Invalid Mine Configuration File')
 
         self.rows, self.cols = self.dat.shape
         self.graph = defaultdict(list)
@@ -49,7 +58,7 @@ class Mine:
                             self.graph[idx].append(self.cord2idx[(pr, pc)])
 
     def plot_mine(self) -> None:
-        """Plot the mine.
+        """Plot the mine configuration.
         """
         x = PrettyTable([' ']+[str(ic) for ic in range(self.cols)])
         for ir in range(self.rows):
@@ -58,8 +67,14 @@ class Mine:
         print(str(x))
 
     def gen_Hs(self) -> Union[PauliOp, WeightedPauliOperator]:
-        r"""Generate the smoothess Hamiltonian 
+        """Generate the smoothess Hamiltonian 
         :math:`H_{s}=\sum_{i}\sum_{j:Parent(i)} (1-Z_{i})/2*(1+Z_{j})/2`
+
+        Returns
+        ----------
+        Union[PauliOp, WeightedPauliOperator]
+            Smoothness Hamiltonian.
+
         """
         Hs = null_operator(self.nqubits)
         for i in range(self.nqubits):
@@ -69,8 +84,14 @@ class Mine:
         return Hs
 
     def gen_Hp(self) -> Union[PauliOp, WeightedPauliOperator]:
-        r"""Generate the profit Hamiltonian 
+        """Generate the profit Hamiltonian 
         :math:`H_{p}=\sum_{i}w(i)(1-Z_{i})/2`
+
+        Returns
+        ----------
+        Union[PauliOp, WeightedPauliOperator]
+            Profit Hamiltonian.
+
         """
         Hp = null_operator(self.nqubits)
         for i in range(self.nqubits):
@@ -78,11 +99,19 @@ class Mine:
         return Hp
 
     def gen_Hamiltonian(self, penalty: float) -> Union[PauliOp, WeightedPauliOperator]:
-        r"""Generate the Hamiltonian with penalty weight :math:`\gamma`.
+        """Generate the Hamiltonian with penalty weight :math:`\gamma`.
 
         :math:`H=H_{s}+\gamma H_{p}`
 
-        :param penalty: penalty for the smoothness term in the Hamiltonian 
-        :type penalty: float
+        Parameters
+        ----------
+        penalty : float
+            Penalty for the smoothness term in the Hamiltonian. 
+
+        Returns
+        ----------
+        Union[PauliOp, WeightedPauliOperator]
+            Hamiltonian with penalty weight :math:`\gamma`.
+
         """
         return self.Hp + penalty*self.Hs

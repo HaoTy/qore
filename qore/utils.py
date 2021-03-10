@@ -29,6 +29,12 @@ def single_qubit_pauli(direction: str, i: int, n: int, legacy: Optional[bool] = 
     return WeightedPauliOperator([(1.0, Pauli(zv, xv))]) if legacy else PauliOp(Pauli(zv, xv), coeff=0.0)
 
 
+def z_projector(k: int, i: int, n: int, legacy: Optional[bool] = True) -> Union[PauliOp, WeightedPauliOperator]:
+    I = identity(n, legacy=legacy)
+    Z = single_qubit_pauli('z', i, n, legacy=legacy)
+    return 0.5*I+(-1)**k*0.5*Z
+
+    
 def measure_operator(H: Union[OperatorBase, LegacyBaseOperator],
                      circuit: QuantumCircuit,
                      instance: QuantumInstance) -> float:

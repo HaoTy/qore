@@ -1,7 +1,9 @@
 import numpy as np
 from typing import Union, Optional
+from qiskit.aqua.quantum_instance import QuantumInstance
+from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.quantum_info import Pauli
-from qiskit.aqua.operators import PauliOp, WeightedPauliOperator, LegacyBaseOperator, PauliExpectation, CircuitSampler, StateFn, CircuitStateFn
+from qiskit.aqua.operators import PauliOp, WeightedPauliOperator, OperatorBase, LegacyBaseOperator, PauliExpectation, CircuitSampler, StateFn, CircuitStateFn
 
 
 def identity(n: int, legacy: Optional[bool] = True) -> Union[PauliOp, WeightedPauliOperator]:
@@ -32,8 +34,10 @@ def z_projector(k: int, i: int, n: int, legacy: Optional[bool] = True) -> Union[
     Z = single_qubit_pauli('z', i, n, legacy=legacy)
     return 0.5*I+(-1)**k*0.5*Z
 
-
-def measure_operator(H, circuit, instance) -> float:
+    
+def measure_operator(H: Union[OperatorBase, LegacyBaseOperator],
+                     circuit: QuantumCircuit,
+                     instance: QuantumInstance) -> float:
     if isinstance(H, LegacyBaseOperator):
         H = H.to_opflow()
     return CircuitSampler(instance).convert(PauliExpectation().convert(

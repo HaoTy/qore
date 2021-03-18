@@ -136,7 +136,7 @@ class Mine:
     def gen_Hamiltonian(self, penalty: float) -> Union[PauliOp, WeightedPauliOperator]:
         """Generate the Hamiltonian with penalty weight :math:`\gamma`.
 
-        :math:`H=H_{s}+\gamma H_{p}`
+        :math:`H=-H_{p}+\gamma H_{s}`
 
         Parameters
         ----------

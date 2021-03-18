@@ -2,10 +2,14 @@
 
 __docformat__ = 'reStructuredText'
 
-from typing import List, Union
+from typing import List, Union, Callable
 from collections import defaultdict
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+import networkx as nx
+from networkx import Graph
 from prettytable import PrettyTable
 from qiskit.aqua.operators import PauliOp, WeightedPauliOperator
 
@@ -73,6 +77,30 @@ class Mine:
                             for ic in range(self.cols)])
         print(str(x))
 
+    def plot_mine_graph(self, color: str = 'r', pos_func: Callable = nx.spring_layout) -> None:
+        """Plot a graph representing the mine configuration.
+
+        Parameters
+        ----------
+        color : str
+            Color of the nodes.
+        pos_func : Callable
+            A Callable that returns positions of nodes.
+
+        """
+        G = Graph()
+        G.add_nodes_from(np.arange(self.nqubits))
+        elist = [[i, j] for i, jl in self.graph.items() for j in jl]
+        # tuple is (i,j,weight) where (i,j) is the edge
+        G.add_edges_from(elist)
+
+        colors = [color for node in G.nodes()]
+        pos = pos_func(G)
+
+        default_axes = plt.axes(frameon=True)
+        nx.draw_networkx(G, node_color=colors, node_size=600,
+                         alpha=.8, ax=default_axes, pos=pos)
+
     def gen_Hs(self) -> Union[PauliOp, WeightedPauliOperator]:
         """Generate the smoothess Hamiltonian 
         :math:`H_{s}=\sum_{i}\sum_{j:Parent(i)} (1-Z_{i})/2*(1+Z_{j})/2`
@@ -86,8 +114,8 @@ class Mine:
         Hs = null_operator(self.nqubits)
         for i in range(self.nqubits):
             for j in self.graph[i]:
-                Hs += z_projector(0, i, self.nqubits) * \
-                    z_projector(1, j, self.nqubits)
+                Hs += z_projector(1, i, self.nqubits) * \
+                    z_projector(0, j, self.nqubits)
         return Hs
 
     def gen_Hp(self) -> Union[PauliOp, WeightedPauliOperator]:
@@ -162,7 +190,7 @@ class Mine:
         """
         assert len(
             bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
-        dig = list(map(lambda x: 1 if x=='1' else -1, list(bitstring)))
+        dig = list(map(lambda x: 1 if x == '1' else -1, list(bitstring)))
         res = 0
         for i in range(self.nqubits):
             for j in self.graph[i]:

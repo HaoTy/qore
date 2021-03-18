@@ -34,9 +34,9 @@ class ASP(QuantumAlgorithm):
         self.H_P = H_P
         self.evol_time = evol_time
         self.nsteps = nsteps
-        self.initial_state = initial_state.copy() or StandardASPInitialState(
+        self.initial_state = initial_state.copy() if initial_state is not None else StandardASPInitialState(
             H_P.num_qubits)
-        self.H_B = H_B.copy() or construct_default_H_B(H_P.num_qubits)
+        self.H_B = H_B.copy() if H_B is not None else construct_default_H_B(H_P.num_qubits)
 
     @property
     def num_qubits(self) -> int:
@@ -46,7 +46,7 @@ class ASP(QuantumAlgorithm):
         circ = self.initial_state
         for i in range(self.nsteps):
             xi = i / self.nsteps
-            circ = ((1 - xi) * self.H_B + xi * self.self.H_P).evolve(
+            circ = ((1 - xi) * self.H_B + xi * self.H_P).evolve(
                 circ, evo_time=self.evol_time / self.nsteps)
         self.circuit = circ
         return circ

@@ -195,4 +195,4 @@ class Mine:
         for i in range(self.nqubits):
             for j in self.graph[i]:
                 res += 0.25 * (1. + dig[i]) * (1. - dig[j])
-        return res
+        return int(res)

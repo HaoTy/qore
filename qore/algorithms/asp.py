@@ -3,7 +3,7 @@
 See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, List, Callable
 from qiskit.aqua.algorithms import QuantumAlgorithm  # , AlgorithmResult
 from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.aqua.components.initial_states import InitialState
@@ -11,7 +11,8 @@ from qiskit.providers import BaseBackend, Backend
 from qiskit.aqua import QuantumInstance, AquaError
 from qiskit.aqua.operators import OperatorBase, LegacyBaseOperator
 # import numpy as np
-from qore.utils import single_qubit_pauli, null_operator
+from qore.utils import single_qubit_pauli, null_operator, measure_operator, get_bitstring_probabilities
+from qore.model.mine import Mine
 
 
 class ASP(QuantumAlgorithm):
@@ -27,6 +28,7 @@ class ASP(QuantumAlgorithm):
                  nsteps: int,
                  initial_state: Optional[QuantumCircuit] = None,
                  H_B: Optional[Union[OperatorBase, LegacyBaseOperator]] = None,
+                 callback: Optional[Callable[[QuantumCircuit], None]] = None,
                  quantum_instance: Optional[Union[QuantumInstance,
                                                   BaseBackend, Backend]] = None
                  ) -> None:
@@ -37,6 +39,7 @@ class ASP(QuantumAlgorithm):
         self.initial_state = StandardASPInitialState(
             H_P.num_qubits).construct_circuit() if initial_state is None else initial_state.copy()
         self.H_B = construct_default_H_B(H_P.num_qubits) if H_B is None else H_B.copy()
+        self._callback = callback
 
     @property
     def num_qubits(self) -> int:
@@ -52,6 +55,9 @@ class ASP(QuantumAlgorithm):
             circ = ((1 - xi)*self.H_B).evolve(circ, self.evol_time / self.nsteps,
                                               num_time_slices=1, expansion_mode='trotter', expansion_order=1)
             circ.barrier()
+            if self._callback:
+                self._callback(circ)
+
         self.circuit = circ
         return circ
 

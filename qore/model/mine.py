@@ -86,8 +86,8 @@ class Mine:
         Hs = null_operator(self.nqubits)
         for i in range(self.nqubits):
             for j in self.graph[i]:
-                Hs += z_projector(1, i, self.nqubits) * \
-                    z_projector(0, j, self.nqubits)
+                Hs += z_projector(0, i, self.nqubits) * \
+                    z_projector(1, j, self.nqubits)
         return Hs
 
     def gen_Hp(self) -> Union[PauliOp, WeightedPauliOperator]:
@@ -166,5 +166,5 @@ class Mine:
         res = 0
         for i in range(self.nqubits):
             for j in self.graph[i]:
-                res += 0.25* (1. + dig[i]) * (1. - dig[j])
+                res += 0.25 * (1. + dig[i]) * (1. - dig[j])
         return res

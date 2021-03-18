@@ -34,9 +34,9 @@ class ASP(QuantumAlgorithm):
         self.H_P = H_P
         self.evol_time = evol_time
         self.nsteps = nsteps
-        self.initial_state = initial_state.copy() if initial_state is not None else StandardASPInitialState(
-            H_P.num_qubits)
-        self.H_B = H_B.copy() if H_B is not None else construct_default_H_B(H_P.num_qubits)
+        self.initial_state = StandardASPInitialState(
+            H_P.num_qubits).construct_circuit() if initial_state is None else initial_state.copy()
+        self.H_B = construct_default_H_B(H_P.num_qubits) if H_B is None else H_B.copy()
 
     @property
     def num_qubits(self) -> int:
@@ -45,9 +45,13 @@ class ASP(QuantumAlgorithm):
     def construct_circuit(self) -> QuantumCircuit:
         circ = self.initial_state
         for i in range(self.nsteps):
-            xi = i / self.nsteps
-            circ = ((1 - xi) * self.H_B + xi * self.H_P).evolve(
-                circ, evo_time=self.evol_time / self.nsteps)
+            xi = (0.5 + i) / self.nsteps
+            circ = (xi*self.H_P).evolve(circ, evo_time=self.evol_time / self.nsteps,
+                                        num_time_slices=1, expansion_mode='trotter', expansion_order=1)
+            circ.barrier()
+            circ = ((1 - xi)*self.H_B).evolve(circ, self.evol_time / self.nsteps,
+                                              num_time_slices=1, expansion_mode='trotter', expansion_order=1)
+            circ.barrier()
         self.circuit = circ
         return circ
 
@@ -67,6 +71,7 @@ class StandardASPInitialState(InitialState):
             circ = QuantumCircuit(
                 register or QuantumRegister(self.num_qubits, 'q'))
             for i in range(self.num_qubits):
+                circ.x(i)
                 circ.h(i)
             return circ
         elif mode == 'vector':

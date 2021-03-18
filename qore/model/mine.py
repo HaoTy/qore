@@ -15,7 +15,7 @@ from qore.utils import null_operator, z_projector
 class Mine:
     """This class stores the mine configurations."""
 
-    def __init__(self, mine_config: str = '') -> None:
+    def __init__(self, mine_config: Union[str, np.ndarray]) -> None:
         """Initialize the Mine class.
 
         Parameters
@@ -29,10 +29,17 @@ class Mine:
             Invalid path to the mine configuration file.
 
         """
-        try:
-            self.dat = np.loadtxt(mine_config)
-        except:
-            raise IOError('Invalid Mine Configuration File')
+        if isinstance(mine_config, str):
+            try:
+                self.dat = np.loadtxt(mine_config)
+            except:
+                raise IOError('Invalid Mine Configuration File')
+        elif isinstance(mine_config, np.ndarray):
+            if len(mine_config.shape) != 2:
+                raise ValueError('`mine_config` must be two-demensional')
+            self.dat = mine_config
+        else:
+            raise ValueError('Unrecognized `mine_config` type')
 
         self.rows, self.cols = self.dat.shape
         self.graph = defaultdict(list)

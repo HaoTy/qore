@@ -121,4 +121,50 @@ class Mine:
             Hamiltonian with penalty weight :math:`\gamma`.
 
         """
-        return self.Hp + penalty*self.Hs
+        return -self.Hp + penalty*self.Hs
+
+    def plot_mine_state(self, bitstring) -> None:
+        """Plot the mining state represented by the bitstring.
+
+        Parameters
+        ----------
+        bitstring : str
+            A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        """
+        assert len(
+            bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+
+        x = PrettyTable([' ']+[str(ic) for ic in range(self.cols)])
+        for ir in range(self.rows):
+            x.add_row([ir]+[bitstring[self.cord2idx[(ir, ic)]] if (ir, ic) in self.cord2idx else 'x'
+                            for ic in range(self.cols)])
+        print(str(x))
+
+    def get_profit(self, bitstring: str) -> int:
+        """Return profit for a vector state.
+
+        Parameters
+        ----------
+        bitstring : str
+            A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        """
+        assert len(
+            bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+        return sum([self.dat[self.idx2cord[i]] for i in range(self.nqubits) if bitstring[i] == '1'])
+
+    def get_violation(self, bitstring: str) -> int:
+        """Return violation for a vector state.
+
+        Parameters
+        ----------
+        bitstring : str
+            A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        """
+        assert len(
+            bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+        dig = list(map(lambda x: 1 if x=='1' else -1, list(bitstring)))
+        res = 0
+        for i in range(self.nqubits):
+            for j in self.graph[i]:
+                res += 0.25* (1. + dig[i]) * (1. - dig[j])
+        return res

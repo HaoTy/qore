@@ -190,9 +190,9 @@ class Mine:
         """
         assert len(
             bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
-        dig = list(map(lambda x: 1 if x == '1' else -1, list(bitstring)))
+        dig = list(map(lambda x: -1 if x == '1' else 1, list(bitstring)))
         res = 0
         for i in range(self.nqubits):
             for j in self.graph[i]:
-                res += 0.25 * (1. + dig[i]) * (1. - dig[j])
+                res += 0.25 * (1. - dig[i]) * (1. + dig[j])
         return int(res)

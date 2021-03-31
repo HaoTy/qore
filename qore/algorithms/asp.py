@@ -29,6 +29,7 @@ class ASP(QuantumAlgorithm):
                  initial_state: Optional[QuantumCircuit] = None,
                  H_B: Optional[Union[OperatorBase, LegacyBaseOperator]] = None,
                  callback: Optional[Callable[[QuantumCircuit], None]] = None,
+                 callback_freq: Optional[int] = 1,
                  quantum_instance: Optional[Union[QuantumInstance,
                                                   BaseBackend, Backend]] = None
                  ) -> None:
@@ -38,8 +39,10 @@ class ASP(QuantumAlgorithm):
         self.nsteps = nsteps
         self.initial_state = StandardASPInitialState(
             H_P.num_qubits).construct_circuit() if initial_state is None else initial_state.copy()
-        self.H_B = construct_default_H_B(H_P.num_qubits) if H_B is None else H_B.copy()
+        self.H_B = construct_default_H_B(
+            H_P.num_qubits) if H_B is None else H_B.copy()
         self._callback = callback
+        self._freq = callback_freq
 
     @property
     def num_qubits(self) -> int:
@@ -55,7 +58,7 @@ class ASP(QuantumAlgorithm):
             circ = ((1 - xi)*self.H_B).evolve(circ, self.evol_time / self.nsteps,
                                               num_time_slices=1, expansion_mode='trotter', expansion_order=1)
             circ.barrier()
-            if self._callback:
+            if self._callback and i % self._freq == 0:
                 self._callback(circ)
 
         self.circuit = circ

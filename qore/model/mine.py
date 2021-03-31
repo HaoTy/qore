@@ -216,3 +216,22 @@ class Mine:
             for j in self.graph[i]:
                 res += 0.25 * (1. - dig[i]) * (1. + dig[j])
         return int(res)
+
+    def build_pseudoflow_graph(self, MAX_FLOW: int = 1000000):
+        G = nx.DiGraph()
+        G.add_nodes_from(np.arange(self.nqubits))
+        source = -1
+        sink = self.nqubits
+
+        for p in self.graph:
+            for c in self.graph[p]:
+                G.add_edge(p, c, const=MAX_FLOW)
+
+            if self.dat[self.idx2cord[p]] >= 0:
+                G.add_edge(source, p, const=self.dat[self.idx2cord[p]])
+            else:
+                G.add_edge(p, sink, const=-self.dat[self.idx2cord[p]])
+        
+        return G, source, sink
+
+

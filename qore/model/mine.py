@@ -2,7 +2,7 @@
 
 __docformat__ = 'reStructuredText'
 
-from typing import List, Union, Callable
+from typing import List, Optional, Union, Callable
 from collections import defaultdict
 
 import numpy as np
@@ -151,16 +151,22 @@ class Mine:
         """
         return -self.Hp + penalty*self.Hs
 
-    def plot_mine_state(self, bitstring) -> None:
+    def plot_mine_state(self, bitstring: str, bit_ordering: Optional[str] = 'R') -> None:
         """Plot the mining state represented by the bitstring.
 
         Parameters
         ----------
         bitstring : str
             A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        bit_ordering : str
+            Available options ``[\'L\', \'R\']``. ``\'L\'`` means the least significant bit (LSB) is on the left, and ``\'R\'`` means LSB is on the right. LSB represents the qubit with index 0. 
         """
         assert len(
             bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+        assert bit_ordering in [
+            'L', 'R'], "bit_ordering options: \'L\', \'R\'."
+        if bit_ordering == 'R':
+            bitstring = ''.join(list(bitstring)[::-1])
 
         x = PrettyTable([' ']+[str(ic) for ic in range(self.cols)])
         for ir in range(self.rows):
@@ -168,28 +174,42 @@ class Mine:
                             for ic in range(self.cols)])
         print(str(x))
 
-    def get_profit(self, bitstring: str) -> int:
+    def get_profit(self, bitstring: str, bit_ordering: Optional[str] = 'R') -> int:
         """Return profit for a vector state.
 
         Parameters
         ----------
         bitstring : str
             A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        bit_ordering : str
+            Available options ``[\'L\', \'R\']``. ``\'L\'`` means the least significant bit (LSB) is on the left, and ``\'R\'`` means LSB is on the right. LSB represents the qubit with index 0. 
         """
         assert len(
             bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+        assert bit_ordering in [
+            'L', 'R'], "bit_ordering options: \'L\', \'R\'."
+        if bit_ordering == 'R':
+            bitstring = ''.join(list(bitstring)[::-1])
+
         return sum([self.dat[self.idx2cord[i]] for i in range(self.nqubits) if bitstring[i] == '1'])
 
-    def get_violation(self, bitstring: str) -> int:
+    def get_violation(self, bitstring: str, bit_ordering: Optional[str] = 'R') -> int:
         """Return violation for a vector state.
 
         Parameters
         ----------
         bitstring : str
             A 0/1 string represents the state. Length of the string is the same as the number of qubits.
+        bit_ordering : str
+            Available options ``[\'L\', \'R\']``. ``\'L\'`` means the least significant bit (LSB) is on the left, and ``\'R\'`` means LSB is on the right. LSB represents the qubit with index 0. 
         """
         assert len(
             bitstring) == self.nqubits, "Length of the bitstring should be the same as the number of qubits."
+        assert bit_ordering in [
+            'L', 'R'], "bit_ordering options: \'L\', \'R\'."
+        if bit_ordering == 'R':
+            bitstring = ''.join(list(bitstring)[::-1])
+
         dig = list(map(lambda x: -1 if x == '1' else 1, list(bitstring)))
         res = 0
         for i in range(self.nqubits):

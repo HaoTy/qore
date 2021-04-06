@@ -217,7 +217,7 @@ class Mine:
                 res += 0.25 * (1. - dig[i]) * (1. + dig[j])
         return int(res)
 
-    def build_pseudoflow_graph(self, MAX_FLOW: int = 1000000):
+    def gen_pseudoflow_graph(self, MAX_FLOW: int = 1000000):
         G = nx.DiGraph()
         G.add_nodes_from(np.arange(self.nqubits))
         source = -1

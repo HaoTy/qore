@@ -9,8 +9,6 @@ from networkx import Graph
 from networkx.classes.digraph import DiGraph
 import pseudoflow
 # import numpy as np
-from qore.utils import single_qubit_pauli, null_operator, measure_operator, get_bitstring_probabilities
-from qore.model.mine import Mine
 
 class Pseudoflow():
     def __init__(self,

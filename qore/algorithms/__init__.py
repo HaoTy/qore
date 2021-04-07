@@ -1,2 +1,2 @@
 from .asp import ASP
-from qiskit.aqua.algorithms import QAOA, VQE
+from qiskit.algorithms import QAOA, VQE

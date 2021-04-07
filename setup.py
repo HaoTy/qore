@@ -10,7 +10,9 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'numpy>=1.17',
-        'qiskit>=0.23'
+        'qiskit>=0.25',
+        'networkx>=2.5.1',
+        'prettytable>=2.1.0'
     ],
     # test_suite='test.test',
 )

@@ -3,14 +3,10 @@
 See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
-from typing import Optional, Union, Dict, List, Callable
-from qiskit.circuit import QuantumCircuit, QuantumRegister, Parameter
-from qiskit.providers import BaseBackend, Backend
-from qiskit.utils import QuantumInstance
-from qiskit.opflow import OperatorBase, PauliTrotterEvolution, StateFn
-from qiskit.extensions import HamiltonianGate
+from typing import Optional, Dict, Callable
+from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.opflow import OperatorBase
 
-# import numpy as np
 from qore.utils import single_qubit_pauli, null_operator
 
 

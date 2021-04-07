@@ -2,7 +2,7 @@
 
 __docformat__ = "reStructuredText"
 
-from typing import List, Optional, Union, Callable
+from typing import Optional, Union, Callable
 from collections import defaultdict
 
 import numpy as np

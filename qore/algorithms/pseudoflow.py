@@ -29,6 +29,6 @@ class Pseudoflow():
         if verbose: print(info)
         ground_state = [value[0] for _, value in cuts.items()][1:-1]
         bitstring = "".join(list(map(str, ground_state[::-1])))
-        return {'ground_state': bitstring}
+        return {'opt_config': bitstring}
         
 

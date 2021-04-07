@@ -106,3 +106,6 @@ venv.bak/
 # IDE & editor configurations
 .vscode/
 .~README.md
+
+# System files
+.DS_Store

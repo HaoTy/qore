@@ -12,7 +12,8 @@ setup(
         'numpy>=1.17',
         'qiskit>=0.25',
         'networkx>=2.5.1',
-        'prettytable>=2.1.0'
+        'prettytable>=2.1.0',
+        'pseudoflow>=1.15.0'
     ],
     # test_suite='test.test',
 )

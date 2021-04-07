@@ -3,12 +3,8 @@
 See https://hochbaum.ieor.berkeley.edu/html/pub/Hochbaum-OR.pdf
 """
 
-from typing import Optional, Union, Dict, List, Callable
-import networkx as nx
-from networkx import Graph
-from networkx.classes.digraph import DiGraph
+from networkx import DiGraph
 import pseudoflow
-# import numpy as np
 
 class Pseudoflow():
     def __init__(self,
@@ -21,7 +17,7 @@ class Pseudoflow():
         self.sink = sink
 
     def run(self, verbose=False) -> str:
-        breakpoints, cuts, info = pseudoflow.hpf(
+        _, cuts, info = pseudoflow.hpf(
             self.graph,
             self.source,
             self.sink,

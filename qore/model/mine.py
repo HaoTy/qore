@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import networkx as nx
-from networkx import Graph
 from prettytable import PrettyTable
 from qiskit.opflow import PauliOp
 
@@ -91,7 +90,7 @@ class Mine:
             A Callable that returns positions of nodes.
 
         """
-        G = Graph()
+        G = nx.Graph()
         G.add_nodes_from(np.arange(self.nqubits))
         elist = [[i, j] for i, jl in self.graph.items() for j in jl]
         # tuple is (i,j,weight) where (i,j) is the edge
@@ -236,19 +235,3 @@ class Mine:
                 res += 0.25 * (1.0 - dig[i]) * (1.0 + dig[j])
         return int(res)
 
-    def gen_pseudoflow_graph(self, MAX_FLOW: int = 1000000) -> tuple[nx.DiGraph, int, int]:
-        G = nx.DiGraph()
-        G.add_nodes_from(np.arange(self.nqubits))
-        source = -1
-        sink = self.nqubits
-
-        for p in self.graph:
-            for c in self.graph[p]:
-                G.add_edge(p, c, const=MAX_FLOW)
-
-            if self.dat[self.idx2cord[p]] >= 0:
-                G.add_edge(source, p, const=self.dat[self.idx2cord[p]])
-            else:
-                G.add_edge(p, sink, const=-self.dat[self.idx2cord[p]])
-
-        return G, source, sink

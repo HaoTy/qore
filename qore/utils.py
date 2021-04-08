@@ -44,10 +44,10 @@ def z_projector(k: int, i: int, n: int) -> PauliOp:
 def measure_operator(
     H: OperatorBase,
     circuit: QuantumCircuit,
-    instance: QuantumInstance,
+    quantum_instance: QuantumInstance,
 ) -> float:
     return (
-        CircuitSampler(instance)
+        CircuitSampler(quantum_instance)
         .convert(
             PauliExpectation().convert(
                 StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
@@ -58,7 +58,7 @@ def measure_operator(
     )
 
 
-def get_bitstring_probabilities(circuit: QuantumCircuit, instance: QuantumInstance, shots: int) -> dict:
+def get_bitstring_probabilities(circuit: QuantumCircuit, quantum_instance: QuantumInstance) -> dict:
     nqubits = circuit.num_qubits
     qr = QuantumRegister(nqubits, "q")
     cr = ClassicalRegister(nqubits, "c")
@@ -70,9 +70,9 @@ def get_bitstring_probabilities(circuit: QuantumCircuit, instance: QuantumInstan
     circ.barrier()
     for i in range(circ.num_qubits):
         circ.measure(i, i)
-    if instance.is_statevector:
-        backend = Aer.get_backend("qasm_simulator")
-    else:
-        backend = instance.backend
-    result = execute(circ, backend=backend, shots=shots).result().get_counts()
-    return {k: result[k] / float(shots) for k in result.keys()}
+    if quantum_instance.is_statevector:
+        quantum_instance = QuantumInstance(Aer.get_backend("qasm_simulator"))
+    # else:
+    #     backend = quantum_instance.backend
+    result = quantum_instance.execute(circ).get_counts()
+    return {k: result[k] / quantum_instance.run_config.shots for k in result.keys()}

@@ -9,10 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from prettytable import PrettyTable
-from qiskit.opflow import PauliOp
+from qiskit.opflow import PauliOp, I, Z
 from qiskit.algorithms import MinimumEigensolver, AlgorithmResult
+from qiskit.opflow.operator_globals import H
 
-from ..utils import null_operator, z_projector
+from ..utils import null_operator, single_qubit_pauli, z_projector
 from ..algorithms import Pseudoflow
 
 
@@ -115,11 +116,13 @@ class Mine:
             Smoothness Hamiltonian.
 
         """
-        Hs = null_operator(self.nqubits)
+        Hs = 0 * I ^ self.nqubits
         for i in range(self.nqubits):
             for j in self.graph[i]:
-                Hs += z_projector(1, i, self.nqubits) @ z_projector(0, j, self.nqubits)
-        return Hs
+                Hs += (
+                    (I ^ self.nqubits) - ((I ^ self.nqubits - i - 1) ^ Z ^ (I ^ i))
+                ) @ ((I ^ self.nqubits) + ((I ^ self.nqubits - j - 1) ^ Z ^ (I ^ j)))
+        return 0.25 * Hs
 
     def gen_Hp(self) -> PauliOp:
         """Generate the profit Hamiltonian
@@ -131,11 +134,13 @@ class Mine:
             Profit Hamiltonian.
 
         """
-        Hp = null_operator(self.nqubits)
+        Hp = 0 * I ^ self.nqubits
         for i in range(self.nqubits):
             # Qiskit opflow doesn't support multiplying types other than python built-in ones (e.g. np.float64)
-            Hp += float(self.dat[self.idx2cord[i]]) * z_projector(1, i, self.nqubits)
-        return Hp
+            Hp += float(self.dat[self.idx2cord[i]]) * (
+                (I ^ self.nqubits) - ((I ^ self.nqubits - i - 1) ^ Z ^ (I ^ i))
+            )
+        return 0.5 * Hp
 
     def gen_Hamiltonian(self, penalty: Union[float, None]) -> PauliOp:
         """Generate the Hamiltonian with penalty weight :math:`\gamma`.
@@ -250,6 +255,7 @@ class Mine:
             res = algorithm.compute_minimum_eigenvalue(
                 self.gen_Hamiltonian(penalty), [self.Hp, self.Hs]
             )
+            print(res)
             self._ret = MiningProblemResult()
             self._ret.optimal_config, self._ret.optimal_config_prob = max(
                 res.eigenstate.items(), key=lambda item: item[1]

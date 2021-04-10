@@ -4,13 +4,14 @@ See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
 from typing import Optional, Dict, Callable, List, Union
-from qiskit.circuit import QuantumCircuit, QuantumRegister
-from qiskit.opflow import OperatorBase
+from qiskit.circuit import QuantumCircuit
+from qiskit.opflow import OperatorBase, X, I, Minus
 from qiskit.algorithms import (
     MinimumEigensolver,
     MinimumEigensolverResult,
     AlgorithmError,
 )
+from qiskit.opflow.primitive_ops.primitive_op import PrimitiveOp
 from qiskit.utils import QuantumInstance
 from qiskit.providers import Backend, BaseBackend
 
@@ -68,20 +69,14 @@ class ASP(MinimumEigensolver):
         self.nsteps = nsteps
         self.initial_state = initial_state
         self.initial_operator = initial_operator
-        # self.initial_state = (
-        #     StandardASPInitialState(operator.num_qubits).construct_circuit()
-        #     if initial_state is None
-        #     else initial_state.copy()
-        # )
-        # self.initial_operator = construct_default_H_B(operator.num_qubits) if initial_operator is None else initial_operator.copy()
         self._callback = callback
         self._callback_freq = callback_freq
 
     @property
     def num_qubits(self) -> int:
-        for op in (self._operator, self._initial_operator, self._initial_state):
-            if op is not None:
-                return op.num_qubits
+        for attr in (self._operator, self._initial_operator, self._initial_state):
+            if attr is not None:
+                return attr.num_qubits
         return 0
 
     @property
@@ -166,15 +161,12 @@ class ASP(MinimumEigensolver):
         return self.num_qubits == 0 or self.num_qubits == num_qubits
 
     def _set_default_initial_state(self) -> None:
-        self._initial_state = QuantumCircuit(QuantumRegister(self.num_qubits, "q"))
-        for i in range(self.num_qubits):
-            self._initial_state.x(i)
-            self._initial_state.h(i)
+        self._initial_state = (Minus ^ self.num_qubits).to_circuit()
 
     def _set_default_initial_operator(self) -> None:
-        self._initial_operator = null_operator(self.num_qubits)
-        for i in range(self.num_qubits):
-            self._initial_operator += single_qubit_pauli("x", i, self.num_qubits)
+        self._initial_operator = X ^ (I ^ (self.num_qubits - 1))
+        for i in range(1, self.num_qubits):
+            self._initial_operator += (I ^ i) ^ X ^ (I ^ (self.num_qubits - i - 1))
 
     def compute_minimum_eigenvalue(
         self,

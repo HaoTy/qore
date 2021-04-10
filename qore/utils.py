@@ -49,8 +49,10 @@ def measure_operator(
     quantum_instance: QuantumInstance,
     expectation: Optional[ExpectationBase],
 ) -> float:
+
     if expectation is None:
         expectation = PauliExpectation()
+        
     return (
         CircuitSampler(quantum_instance)
         .convert(
@@ -66,9 +68,17 @@ def measure_operator(
 def get_bitstring_probabilities(
     circuit: QuantumCircuit, quantum_instance: QuantumInstance
 ) -> dict:
+
     result = quantum_instance.execute(circuit.measure_all(inplace=False))
+
     if quantum_instance.is_statevector:
-        return result.get_statevector(circuit)
+        return {
+            format(k, f"0{circuit.num_qubits}b"): v
+            for k, v in enumerate(
+                np.square(result.get_statevector(circuit)).real
+            )
+        }
+
     return {
         k: v / quantum_instance.run_config.shots
         for (k, v) in result.get_counts().items()

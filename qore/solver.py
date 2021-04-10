@@ -69,12 +69,10 @@ class QuantumSolver(Solver):
     def __init__(
         self,
         model: Mine,
-        random_seed: int,
         quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
     ) -> None:
         super().__init__(model)
         self.circuit = None
-        algorithm_globals.random_seed = random_seed if random_seed is not None else 1953
         self.quantum_instance = quantum_instance or QuantumInstance(
             Aer.get_backend("statevector_simulator")
         )
@@ -102,10 +100,9 @@ class ASPSolver(QuantumSolver):
     def __init__(
         self,
         model: Mine,
-        random_seed: Optional[int] = None,
         quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
     ) -> None:
-        super().__init__(model, random_seed, quantum_instance)
+        super().__init__(model, quantum_instance)
 
     def solve(self, penalty: float, **kwargs) -> Dict:
         self.circuit = ASP(
@@ -142,10 +139,9 @@ class QAOASolver(QuantumSolver):
         model: Mine,
         optimizer: Optional[Optimizer] = None,
         p: Optional[int] = 4,
-        random_seed: Optional[int] = 1953,
         quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
     ) -> None:
-        super().__init__(model, random_seed, quantum_instance)
+        super().__init__(model, quantum_instance)
         self.optimizer = optimizer or COBYLA()
         self.p = p
 

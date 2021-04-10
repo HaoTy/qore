@@ -1,7 +1,8 @@
 import numpy as np
 from typing import Union, Optional
-from qiskit import QuantumRegister, ClassicalRegister, Aer, execute
+from qiskit import QuantumRegister, ClassicalRegister, execute
 from qiskit.utils.quantum_instance import QuantumInstance
+from qiskit.providers.aer import QasmSimulator
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.quantum_info import Pauli
 from qiskit.opflow import (
@@ -11,6 +12,7 @@ from qiskit.opflow import (
     CircuitSampler,
     StateFn,
     CircuitStateFn,
+    ExpectationBase,
 )
 
 
@@ -45,11 +47,14 @@ def measure_operator(
     H: OperatorBase,
     circuit: QuantumCircuit,
     quantum_instance: QuantumInstance,
+    expectation: Optional[ExpectationBase],
 ) -> float:
+    if expectation is None:
+        expectation = PauliExpectation()
     return (
         CircuitSampler(quantum_instance)
         .convert(
-            PauliExpectation().convert(
+            expectation.convert(
                 StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
             )
         )
@@ -58,21 +63,13 @@ def measure_operator(
     )
 
 
-def get_bitstring_probabilities(circuit: QuantumCircuit, quantum_instance: QuantumInstance) -> dict:
-    nqubits = circuit.num_qubits
-    qr = QuantumRegister(nqubits, "q")
-    cr = ClassicalRegister(nqubits, "c")
-    circ = QuantumCircuit(qr, cr)
-    for m in range(len(circuit)):
-        gate_m = circuit[m][0]
-        qubits = [q.index for q in circuit[m][1]]
-        circ.append(gate_m, [qr[x] for x in qubits])
-    circ.barrier()
-    for i in range(circ.num_qubits):
-        circ.measure(i, i)
+def get_bitstring_probabilities(
+    circuit: QuantumCircuit, quantum_instance: QuantumInstance
+) -> dict:
+    result = quantum_instance.execute(circuit.measure_all(inplace=False))
     if quantum_instance.is_statevector:
-        quantum_instance = QuantumInstance(Aer.get_backend("qasm_simulator"))
-    # else:
-    #     backend = quantum_instance.backend
-    result = quantum_instance.execute(circ).get_counts()
-    return {k: result[k] / quantum_instance.run_config.shots for k in result.keys()}
+        return result.get_statevector(circuit)
+    return {
+        k: v / quantum_instance.run_config.shots
+        for (k, v) in result.get_counts().items()
+    }

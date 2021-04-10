@@ -7,12 +7,13 @@ from collections import defaultdict
 
 import numpy as np
 import matplotlib.pyplot as plt
-
 import networkx as nx
 from prettytable import PrettyTable
 from qiskit.opflow import PauliOp
+from qiskit.algorithms import MinimumEigensolver, AlgorithmResult
 
-from qore.utils import null_operator, z_projector
+from ..utils import null_operator, z_projector
+from ..algorithms import Pseudoflow
 
 
 class Mine:
@@ -136,7 +137,7 @@ class Mine:
             Hp += float(self.dat[self.idx2cord[i]]) * z_projector(1, i, self.nqubits)
         return Hp
 
-    def gen_Hamiltonian(self, penalty: float) -> PauliOp:
+    def gen_Hamiltonian(self, penalty: Union[float, None]) -> PauliOp:
         """Generate the Hamiltonian with penalty weight :math:`\gamma`.
 
         :math:`H=-H_{p}+\gamma H_{s}`
@@ -152,7 +153,12 @@ class Mine:
             Hamiltonian with penalty weight :math:`\gamma`.
 
         """
-        return -self.Hp + penalty * self.Hs
+        if penalty:
+            return -self.Hp + penalty * self.Hs
+        return self.gen_projected_Hamiltonian()
+
+    def gen_projected_Hamiltonian(self) -> PauliOp:
+        raise NotImplementedError()
 
     def plot_mine_state(
         self, bitstring: str, bit_ordering: Optional[str] = "R"
@@ -235,3 +241,79 @@ class Mine:
                 res += 0.25 * (1.0 - dig[i]) * (1.0 + dig[j])
         return int(res)
 
+    def solve(
+        self,
+        algorithm: Union[MinimumEigensolver, Pseudoflow],
+        penalty: Union[float, None],
+    ) -> "MiningProblemResult":
+        if isinstance(algorithm, MinimumEigensolver):
+            res = algorithm.compute_minimum_eigenvalue(
+                self.gen_Hamiltonian(penalty), [self.Hp, self.Hs]
+            )
+            self._ret = MiningProblemResult()
+            self._ret.optimal_config, self._ret.optimal_config_prob = max(
+                res.eigenstate.items(), key=lambda item: item[1]
+            )
+            self._ret.ground_state = res.eigenstate
+            if (
+                res.aux_operator_eigenvalues is not None
+            ):  # Remove after implemented ASP expectation value
+                (
+                    self._ret._expected_profit,
+                    self._ret._expected_violation,
+                ) = res.aux_operator_eigenvalues
+            return self._ret
+        elif isinstance(algorithm, Pseudoflow):
+            raise NotImplementedError()
+        else:
+            raise ValueError()
+
+
+class MiningProblemResult(AlgorithmResult):
+    def __init__(self) -> None:
+        super().__init__()
+        self._optimal_config = None
+        self._optimal_config_prob = None
+        self._ground_state = None
+        self._expected_profit = None
+        self._expected_violation = None
+
+    @property
+    def optimal_config(self) -> Optional[str]:
+        return self._optimal_config
+
+    @optimal_config.setter
+    def optimal_config(self, optimal_config: str) -> None:
+        self._optimal_config = optimal_config
+
+    @property
+    def optimal_config_prob(self) -> Optional[float]:
+        return self._optimal_config_prob
+
+    @optimal_config_prob.setter
+    def optimal_config_prob(self, optimal_config_prob: float) -> None:
+        self._optimal_config_prob = optimal_config_prob
+
+    @property
+    def ground_state(self) -> Optional[np.ndarray]:
+        return self._ground_state
+
+    @ground_state.setter
+    def ground_state(self, ground_state: np.ndarray) -> None:
+        self._ground_state = ground_state
+
+    @property
+    def expected_profit(self) -> Optional[float]:
+        return self._expected_profit
+
+    @expected_profit.setter
+    def expected_profit(self, expected_profit: float) -> None:
+        self._expected_profit = expected_profit
+
+    @property
+    def expected_violation(self) -> Optional[float]:
+        return self._expected_violation
+
+    @expected_violation.setter
+    def expected_violation(self, expected_violation: float) -> None:
+        self._expected_violation = expected_violation

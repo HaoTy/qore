@@ -76,7 +76,8 @@ class Mine:
         """Plot the mine configuration."""
         x = PrettyTable([" "] + [str(ic) for ic in range(self.cols)])
         for ir in range(self.rows):
-            x.add_row([ir] + ["%.3f" % self.dat[ir, ic] for ic in range(self.cols)])
+            x.add_row([ir] + ["%.3f" % self.dat[ir, ic]
+                      for ic in range(self.cols)])
         print(str(x))
 
     def plot_mine_graph(
@@ -164,6 +165,25 @@ class Mine:
 
     def gen_projected_Hamiltonian(self) -> PauliOp:
         raise NotImplementedError()
+
+    def gen_pseudoflow_graph(
+        self, MAX_FLOW: int
+    ) -> tuple[nx.DiGraph, int, int]:
+        G = nx.DiGraph()
+        G.add_nodes_from(np.arange(self.nqubits))
+        source = -1
+        sink = self.nqubits
+
+        for p in self.graph:
+            for c in self.graph[p]:
+                G.add_edge(p, c, const=MAX_FLOW)
+
+            if self.dat[self.idx2cord[p]] >= 0:
+                G.add_edge(source, p, const=self.dat[self.idx2cord[p]])
+            else:
+                G.add_edge(p, sink, const=-self.dat[self.idx2cord[p]])
+
+        return G, source, sink
 
     def plot_mine_state(
         self, bitstring: str, bit_ordering: Optional[str] = "R"
@@ -255,7 +275,6 @@ class Mine:
             res = algorithm.compute_minimum_eigenvalue(
                 self.gen_Hamiltonian(penalty), [self.Hp, self.Hs]
             )
-            print(res)
             self._ret = MiningProblemResult()
             self._ret.optimal_config, self._ret.optimal_config_prob = max(
                 res.eigenstate.items(), key=lambda item: item[1]
@@ -270,7 +289,10 @@ class Mine:
                 ) = res.aux_operator_eigenvalues
             return self._ret
         elif isinstance(algorithm, Pseudoflow):
-            raise NotImplementedError()
+            self._ret = MiningProblemResult()
+            self._ret.optimal_config = algorithm.run(
+                *self.gen_pseudoflow_graph(algorithm.MAX_FLOW))
+            return self._ret
         else:
             raise ValueError()
 

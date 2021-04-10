@@ -68,7 +68,7 @@ def get_bitstring_probabilities(
 ) -> dict:
     result = quantum_instance.execute(circuit.measure_all(inplace=False))
     if quantum_instance.is_statevector:
-        return result.get_statevector(circuit)
+       return result.get_statevector(circuit)
     return {
         k: v / quantum_instance.run_config.shots
         for (k, v) in result.get_counts().items()

@@ -85,7 +85,7 @@ class FragmentationSolver():
         count = 0
         while del_e > tol:
             for idx, submine in enumerate(self.submines):
-                print(f"calculation submine {idx}")
+                print(f"calculating submine {idx}")
                 res = submine.solve(algorithm, penalty, self.z_val)
 
                 self.expected_profit[idx] = res.expected_profit

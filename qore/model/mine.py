@@ -2,7 +2,8 @@
 
 __docformat__ = "reStructuredText"
 
-from typing import Optional, Union, Callable
+from typing import List, Dict, Optional, Union, Callable
+from abc import ABC, abstractclassmethod, abstractmethod
 from collections import defaultdict
 
 import numpy as np
@@ -17,7 +18,20 @@ from ..utils import null_operator, single_qubit_pauli, z_projector
 from ..algorithms import Pseudoflow
 
 
-class Mine:
+class BaseMine(ABC):
+    """
+    Abstract Mine class
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def solve(self) -> "MiningProblemResult":
+        raise NotImplementedError()
+
+
+class Mine(BaseMine):
     """This class stores the mine configurations."""
 
     def __init__(self, mine_config: Union[str, np.ndarray]) -> None:
@@ -47,7 +61,8 @@ class Mine:
             raise ValueError("Unrecognized `mine_config` type")
 
         self.rows, self.cols = self.dat.shape
-        self.graph = defaultdict(list)
+        self.graph = defaultdict(list)  # p:c
+        self.graph_r = defaultdict(list)  # c:p
         self.idx2cord = []
         self.cord2idx = {}
         self._init_mapping()
@@ -71,6 +86,7 @@ class Mine:
                             and self.dat[pr, pc] < float("inf")
                         ):
                             self.graph[idx].append(self.cord2idx[(pr, pc)])
+                            self.graph_r[self.cord2idx[(pr, pc)]].append(idx)
 
     def plot_mine(self) -> None:
         """Plot the mine configuration."""
@@ -297,6 +313,89 @@ class Mine:
             raise ValueError()
 
 
+class SubMine(BaseMine):
+    def __init__(self, mine: Mine, node_list: List) -> None:
+        self.node_list = node_list
+        self.nqubits = len(self.node_list)
+        self.node_c = {}  # key: a node in this frag, value: child node in another frag
+        self.node_p = {}  # key: a node in this frag, value: parent node in another frag
+        self.node_bd = []  # submine idx of bd nodes
+        self.zb = []  # pauli z op of bd nodes
+
+        self._init_nodes(mine)
+        self.Hp = self.gen_Hp(mine)  # profit
+        self.Hs = self.gen_Hs(mine)  # smoothness, inner nodes
+        self.Hb = null_operator(self.nqubits)  # boundary
+
+    def _init_nodes(self, mine: Mine) -> None:
+        for idx, i in enumerate(self.node_list):
+            self.node_c[i] = [j for j in mine.graph[i]
+                              if j not in self.node_list]
+            self.node_p[i] = [j for j in mine.graph_r[i]
+                              if j not in self.node_list]
+            if len(self.node_c[i]) + len(self.node_p[i]) > 0:
+                self.node_bd.append(idx)
+                self.zb.append(single_qubit_pauli('z', idx, self.nqubits)) 
+
+    def gen_Hs(self, mine: Mine) -> PauliOp:
+        Hs = null_operator(self.nqubits)
+        for sub_i, i in enumerate(self.node_list):
+            for j in mine.graph[i]:
+                try:
+                    sub_j = self.node_list.index(j)
+                    Hs += z_projector(1, sub_i,
+                                      self.nqubits) @ z_projector(0, sub_j, self.nqubits)
+                except:
+                    continue
+        return Hs
+
+    def gen_Hp(self, mine: Mine) -> PauliOp:
+        Hp = null_operator(self.nqubits)
+        for sub_idx, idx in enumerate(self.node_list):
+            Hp += float(mine.dat[mine.idx2cord[idx]]) * \
+                z_projector(1, sub_idx, self.nqubits)
+        return Hp
+
+    def _update_Hb(self, z_val: Dict) -> None:
+        self.Hb = null_operator(self.nqubits)
+        for sub_idx in self.node_bd:
+            mine_idx = self.node_list[sub_idx]
+            for j in self.node_c[mine_idx]:
+                self.Hb += float(0.5*(1+z_val[j])) * \
+                    z_projector(1, sub_idx, self.nqubits)
+            for j in self.node_p[mine_idx]:
+                self.Hb += float(0.5*(1-z_val[j])) * \
+                    z_projector(0, sub_idx, self.nqubits)
+
+    def gen_Hamiltonian(self, penalty: float, z_val: Dict) -> PauliOp:
+        self._update_Hb(z_val)
+        H_res = -self.Hp + penalty * (self.Hs + self.Hb)
+        return H_res
+
+    def solve(
+        self,
+        algorithm: MinimumEigensolver,
+        penalty: Union[float, None],
+        z_val: Dict
+    ) -> "MiningProblemResult":
+        if isinstance(algorithm, MinimumEigensolver):
+            res = algorithm.compute_minimum_eigenvalue(
+                self.gen_Hamiltonian(penalty, z_val), self.zb + [self.Hp, self.Hs]
+            )
+            self._ret = MiningProblemResult()
+            self._ret.optimal_config, self._ret.optimal_config_prob = max(
+                res.eigenstate.items(), key=lambda item: item[1]
+            )
+            #self._ret.ground_state = res.eigenstate
+            for sub_idx, zi in zip(self.node_bd, res.aux_operator_eigenvalues[:-2]):
+                z_val[self.node_list[sub_idx]] = zi
+            self._ret.expected_profit = res.aux_operator_eigenvalues[-2]
+            self._ret.expected_violation = res.aux_operator_eigenvalues[-1]
+            return self._ret
+        else:
+            raise ValueError()
+
+
 class MiningProblemResult(AlgorithmResult):
     def __init__(self) -> None:
         super().__init__()
@@ -345,3 +444,4 @@ class MiningProblemResult(AlgorithmResult):
     @expected_violation.setter
     def expected_violation(self, expected_violation: float) -> None:
         self._expected_violation = expected_violation
+

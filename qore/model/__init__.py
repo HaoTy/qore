@@ -1,1 +1,1 @@
-from .mine import Mine
+from .mine import Mine, SubMine, MiningProblemResult

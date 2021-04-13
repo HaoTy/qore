@@ -1,196 +1,111 @@
-from typing import Optional, Union, Dict, List, Callable
-from abc import ABC, abstractmethod
-
+from typing import Optional, Union, Dict, List
 import numpy as np
-from qiskit import Aer
-from qiskit.utils import algorithm_globals, QuantumInstance
-from qiskit.algorithms.optimizers import COBYLA, Optimizer
-from qiskit.providers import BaseBackend, Backend
-import networkx as nx
 
-from qore import Mine, ASP, QAOA, Pseudoflow
-from qore.utils import measure_operator, get_bitstring_probabilities
+from qiskit.utils import QuantumInstance
+from qiskit.providers import Backend, BaseBackend
+from qiskit.providers.aer import QasmSimulator
+from qiskit.algorithms import MinimumEigensolver
+from qiskit.opflow import Minus
+
+from qore import Mine, SubMine, MiningProblemResult
+from .utils import measure_operator
 
 
-class Solver(ABC):
+class FragmentationSolver():
     """
-    Abstract solver for an open pit mining circuit.
-    """
-
-    def __init__(self, model: Mine) -> None:
-        self._model = model
-        self.result = None
-
-    @abstractmethod
-    def solve(self) -> Dict:
-        """
-        Return a result dict.
-        """
-        raise NotImplementedError()
-
-
-class PseudoflowSolver(Solver):
-    """
-    Solver for the Pseudoflow algorithm.
+    Open-pit mining problem solver with fragmentation.
     """
 
-    def __init__(self, model: Mine) -> None:
-        super().__init__(model)
+    def __init__(self,
+                 qmine: Mine,
+                 node_lists: List,
+                 quantum_instance: Optional[Union[QuantumInstance,
+                                                  BaseBackend, Backend]] = None,
+                 shots: Optional[int] = 1024,
+                 ) -> None:
+        # quantum backends
+        if quantum_instance:
+            self.quantum_instance = quantum_instance
+        else:
+            backend = QasmSimulator(method='statevector')
+            self.quantum_instance = QuantumInstance(backend)
+        self.shots = shots
 
-    def solve(self) -> Dict:
-        self.result = Pseudoflow(*self.gen_pseudoflow_graph()).run()
-        return self.result
+        # submines
+        self.qmine = qmine
+        self.submines = []  # submine objects
+        self.z_val = {}
+        self._init_submine(node_lists)
 
-    def gen_pseudoflow_graph(
-        self, MAX_FLOW: int = 1000000
-    ) -> tuple[nx.DiGraph, int, int]:
-        G = nx.DiGraph()
-        G.add_nodes_from(np.arange(self._model.nqubits))
-        source = -1
-        sink = self._model.nqubits
+        # energy
+        self.nfrags = len(self.submines)
+        self.expected_profit = [0.]*self.nfrags
+        self.expected_violation = [0.]*self.nfrags
+        self._init_energy()  # TODO: random initialization
 
-        for p in self._model.graph:
-            for c in self._model.graph[p]:
-                G.add_edge(p, c, const=MAX_FLOW)
+        # optimal configuration
+        self.optimal_config = ['0']*self.qmine.nqubits
 
-            if self._model.dat[self._model.idx2cord[p]] >= 0:
-                G.add_edge(source, p, const=self._model.dat[self._model.idx2cord[p]])
-            else:
-                G.add_edge(p, sink, const=-self._model.dat[self._model.idx2cord[p]])
+    def _init_submine(self, node_lists: List) -> None:
+        for node_list in node_lists:
+            submine = SubMine(self.qmine, node_list)
+            self.submines.append(submine)
+            for i in submine.node_c:
+                self.z_val[i] = 0
 
-        return G, source, sink
+    def _init_energy(self) -> None:
+        for idx, submine in enumerate(self.submines):
+            init_state = (Minus ^ submine.nqubits).to_circuit()
+            self.expected_profit[idx] = measure_operator(
+                submine.Hp, init_state, self.quantum_instance)
+            self.expected_violation[idx] = measure_operator(
+                submine.Hs, init_state, self.quantum_instance)
 
+    def cal_energy(self, penalty: float) -> float:
+        res_bd = 0.0
+        for submine in self.submines:
+            for p in submine.node_c:
+                for c in submine.node_c[p]:
+                    res_bd += 0.5*(1-self.z_val[p])*0.5*(1+self.z_val[c])
 
-class QuantumSolver(Solver):
-    """
-    Abstract quantum solver
-    """
+        return sum(self.expected_profit) + penalty*(sum(self.expected_violation) + res_bd)
 
-    def __init__(
+    def get_config(self) -> str:
+        return "".join(self.optimal_config[::-1])
+
+    def calc(
         self,
-        model: Mine,
-        quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
-    ) -> None:
-        super().__init__(model)
-        self.circuit = None
-        self.quantum_instance = quantum_instance or QuantumInstance(
-            Aer.get_backend("statevector_simulator")
-        )
+        algorithm: MinimumEigensolver,
+        penalty: float,
+        tol: Optional[float] = 1e-5
+    ) -> "MiningProblemResult":
+        energy = sum(self.expected_profit) + penalty * \
+            sum(self.expected_violation)
+        del_e = tol+0.1
+        count = 0
+        while del_e > tol:
+            for idx, submine in enumerate(self.submines):
+                print(f"calculation submine {idx}")
+                res = submine.solve(algorithm, penalty, self.z_val)
 
-    @property
-    def quantum_instance(self) -> Optional[QuantumInstance]:
-        """ Returns quantum instance. """
-        return self._quantum_instance
+                self.expected_profit[idx] = res.expected_profit
+                self.expected_violation[idx] = res.expected_violation
 
-    @quantum_instance.setter
-    def quantum_instance(
-        self, quantum_instance: Union[QuantumInstance, BaseBackend, Backend]
-    ) -> None:
-        """ Sets quantum instance. """
-        if isinstance(quantum_instance, (BaseBackend, Backend)):
-            quantum_instance = QuantumInstance(quantum_instance)
-        self._quantum_instance = quantum_instance
+                optimal_config = list(res.optimal_config)[::-1]
+                for idx, b in zip(submine.node_list, optimal_config):
+                    self.optimal_config[idx] = b
 
+            energy_new = self.cal_energy(penalty)
+            energy, del_e = energy_new, abs(energy_new - energy)
 
-class ASPSolver(QuantumSolver):
-    """
-    Solver for the ASP algorithm.
-    """
+            count += 1
+            print(f"iteration {count}")
+            print(f"del_e={del_e}")
+            print("---------------------------------------------")
 
-    def __init__(
-        self,
-        model: Mine,
-        quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
-    ) -> None:
-        super().__init__(model, quantum_instance)
-
-    def solve(self, penalty: float, **kwargs) -> Dict:
-        self.circuit = ASP(
-            self._model.gen_Hamiltonian(penalty=penalty), **kwargs
-        ).construct_circuit()
-
-        x = get_bitstring_probabilities(
-            self.circuit, self.quantum_instance
-        )
-        bitstr, prob = max(x.items(), key=lambda item: item[1])
-
-        self.result = {
-            "opt_config": bitstr,
-            "opt_config_prob": prob,
-            "profit_avg": measure_operator(
-                self._model.Hp, self.circuit, self.quantum_instance
-            ),
-            "violation_avg": measure_operator(
-                self._model.Hs, self.circuit, self.quantum_instance
-            ),
-            "ground_state": x,
-        }
-
-        return self.result
-
-
-class QAOASolver(QuantumSolver):
-    """
-    Solver for the ASP algorithm.
-    """
-
-    def __init__(
-        self,
-        model: Mine,
-        optimizer: Optional[Optimizer] = None,
-        p: Optional[int] = 4,
-        quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
-    ) -> None:
-        super().__init__(model, quantum_instance)
-        self.optimizer = optimizer or COBYLA()
-        self.p = p
-
-    def solve(self, penalty: float, **kwargs) -> Dict:
-        qaoa = QAOA(
-            optimizer=self.optimizer,
-            quantum_instance=self.quantum_instance,
-            reps=self.p,
-            **kwargs
-        )
-        qaoa.compute_minimum_eigenvalue(self._model.gen_Hamiltonian(penalty=penalty))
-        self.circuit = qaoa.get_optimal_circuit()
-
-        x = get_bitstring_probabilities(
-            self.circuit, self.quantum_instance
-        )
-        bitstr, prob = max(x.items(), key=lambda item: item[1])
-
-        self.result = {
-            "opt_config": bitstr,
-            "opt_config_prob": prob,
-            "profit_avg": measure_operator(
-                self._model.Hp, self.circuit, self.quantum_instance
-            ),
-            "violation_avg": measure_operator(
-                self._model.Hs, self.circuit, self.quantum_instance
-            ),
-            "ground_state": x,
-        }
-
-        return self.result
-
-
-class FragmentationSolver(QuantumSolver):
-    """
-    Generalized fragmented ASP solver.
-    """
-
-    def __init__(
-        self,
-        model: Mine,
-        random_seed: Optional[int] = 1953,
-        backend=Aer.get_backend("statevector_simulator"),
-        shots: Optional[int] = 1024,
-    ) -> None:
-        super().__init__(model, random_seed, backend, shots)
-
-    def calc_frag_H(self):
-        raise NotImplementedError()
-
-    def solve(self) -> Dict:
-        raise NotImplementedError()
+        self._ret = MiningProblemResult()
+        self._ret.optimal_config = self.get_config()
+        self._ret.expected_profit = sum(self.expected_profit)
+        self._ret.expected_violation = (
+            energy - self._ret.expected_profit) / penalty
+        return self._ret

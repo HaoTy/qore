@@ -47,17 +47,18 @@ def measure_operator(
     H: OperatorBase,
     circuit: QuantumCircuit,
     quantum_instance: QuantumInstance,
-    expectation: Optional[ExpectationBase],
+    expectation: Optional[ExpectationBase] = None,
 ) -> float:
 
     if expectation is None:
         expectation = PauliExpectation()
-        
+
     return (
         CircuitSampler(quantum_instance)
         .convert(
             expectation.convert(
-                StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
+                StateFn(H, is_measurement=True).compose(
+                    CircuitStateFn(circuit))
             )
         )
         .eval()

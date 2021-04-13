@@ -1,4 +1,4 @@
 from .algorithms import ASP, QAOA, VQE, Pseudoflow
-from .model import Mine
-from .solver import PseudoflowSolver, ASPSolver, QAOASolver
+from .model import Mine, SubMine, MiningProblemResult
+from .solver import FragmentationSolver
 from qiskit.utils import algorithm_globals

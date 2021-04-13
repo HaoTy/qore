@@ -47,7 +47,7 @@ def measure_operator(
     H: OperatorBase,
     circuit: QuantumCircuit,
     quantum_instance: QuantumInstance,
-    expectation: Optional[ExpectationBase],
+    expectation: Optional[ExpectationBase] = None,
 ) -> float:
 
     if expectation is None:

@@ -9,11 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from prettytable import PrettyTable
-from qiskit.opflow import PauliOp, I, Z
+from qiskit.opflow import PauliOp, I, Z, Plus, MatrixOp
 from qiskit.algorithms import MinimumEigensolver, AlgorithmResult
-from qiskit.opflow.operator_globals import H
 
-from ..utils import null_operator, single_qubit_pauli, z_projector
 from ..algorithms import Pseudoflow
 
 
@@ -52,6 +50,7 @@ class Mine:
         self.cord2idx = {}
         self._init_mapping()
         self.nqubits: int = len(self.idx2cord)
+        self.valid_configs = None
 
         self.Hs = self.gen_Hs()
         self.Hp = self.gen_Hp()
@@ -159,11 +158,23 @@ class Mine:
 
         """
         if penalty:
-            return -self.Hp + penalty * self.Hs
+            return (-self.Hp + penalty * self.Hs).reduce()
         return self.gen_projected_Hamiltonian()
 
     def gen_projected_Hamiltonian(self) -> PauliOp:
-        raise NotImplementedError()
+        self.valid_configs = set(range(2 ** self.nqubits)) - set(
+            int(k, 2)
+            for k in (-self.Hs @ (Plus ^ self.nqubits))
+            # .to_matrix_op()
+            .reduce()
+            .eval()
+            .sample(shots=2 ** (self.nqubits + 6))
+            .keys()
+        )
+        p_op = np.zeros((2 ** self.nqubits))
+        p_op[np.array(list(self.valid_configs), dtype=int)] = 1
+        p_op = MatrixOp(np.diag(p_op))
+        return (p_op @ -self.Hp @ p_op).reduce().to_matrix_op()
 
     def plot_mine_state(
         self, bitstring: str, bit_ordering: Optional[str] = "R"
@@ -249,16 +260,20 @@ class Mine:
     def solve(
         self,
         algorithm: Union[MinimumEigensolver, Pseudoflow],
-        penalty: Union[float, None],
+        penalty: Union[float, None] = None,
     ) -> "MiningProblemResult":
         if isinstance(algorithm, MinimumEigensolver):
             res = algorithm.compute_minimum_eigenvalue(
                 self.gen_Hamiltonian(penalty), [self.Hp, self.Hs]
             )
-            print(res)
             self._ret = MiningProblemResult()
             self._ret.optimal_config, self._ret.optimal_config_prob = max(
-                res.eigenstate.items(), key=lambda item: item[1]
+                (
+                    item
+                    for item in res.eigenstate.items()
+                    if int(item[0], 2) in self.valid_configs
+                ),
+                key=lambda item: item[1],
             )
             self._ret.ground_state = res.eigenstate
             if (

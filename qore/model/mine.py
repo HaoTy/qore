@@ -75,7 +75,8 @@ class Mine:
         """Plot the mine configuration."""
         x = PrettyTable([" "] + [str(ic) for ic in range(self.cols)])
         for ir in range(self.rows):
-            x.add_row([ir] + ["%.3f" % self.dat[ir, ic] for ic in range(self.cols)])
+            x.add_row([ir] + ["%.3f" % self.dat[ir, ic]
+                      for ic in range(self.cols)])
         print(str(x))
 
     def plot_mine_graph(
@@ -175,6 +176,25 @@ class Mine:
         p_op[np.array(list(self.valid_configs), dtype=int)] = 1
         p_op = MatrixOp(np.diag(p_op))
         return (p_op @ -self.Hp @ p_op).reduce().to_matrix_op()
+
+    def gen_pseudoflow_graph(
+        self, MAX_FLOW: int
+    ) -> tuple[nx.DiGraph, int, int]:
+        G = nx.DiGraph()
+        G.add_nodes_from(np.arange(self.nqubits))
+        source = -1
+        sink = self.nqubits
+
+        for p in self.graph:
+            for c in self.graph[p]:
+                G.add_edge(p, c, const=MAX_FLOW)
+
+            if self.dat[self.idx2cord[p]] >= 0:
+                G.add_edge(source, p, const=self.dat[self.idx2cord[p]])
+            else:
+                G.add_edge(p, sink, const=-self.dat[self.idx2cord[p]])
+
+        return G, source, sink
 
     def plot_mine_state(
         self, bitstring: str, bit_ordering: Optional[str] = "R"
@@ -285,7 +305,10 @@ class Mine:
                 ) = res.aux_operator_eigenvalues
             return self._ret
         elif isinstance(algorithm, Pseudoflow):
-            raise NotImplementedError()
+            self._ret = MiningProblemResult()
+            self._ret.optimal_config = algorithm.run(
+                *self.gen_pseudoflow_graph(algorithm.MAX_FLOW))
+            return self._ret
         else:
             raise ValueError()
 

@@ -4,6 +4,7 @@ See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
 from typing import Optional, Dict, Callable, List, Union
+from qiskit.providers.aer import QasmSimulator
 from qiskit.circuit import QuantumCircuit
 from qiskit.opflow import OperatorBase, X, I, Minus
 from qiskit.algorithms import (
@@ -35,7 +36,8 @@ class ASP(MinimumEigensolver):
         # include_custom: bool = False,
         callback: Optional[Callable[[QuantumCircuit, int], None]] = None,
         callback_freq: Optional[int] = 1,
-        quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
+        quantum_instance: Optional[Union[QuantumInstance,
+                                         BaseBackend, Backend]] = None,
     ) -> None:
         """
         Initialize the Adiabatic State Preparation algorithm.
@@ -65,6 +67,9 @@ class ASP(MinimumEigensolver):
 
         if quantum_instance:
             self.quantum_instance = quantum_instance
+        else:
+            backend = QasmSimulator(method='statevector')
+            self.quantum_instance = QuantumInstance(backend)
         self.evol_time = evol_time
         self.nsteps = nsteps
         self.initial_state = initial_state
@@ -152,7 +157,7 @@ class ASP(MinimumEigensolver):
                 list(range(self.num_qubits)),
             )
             if self._callback and i % self._callback_freq == 0:
-                self._callback(circuit, i)
+                self._callback(circuit)
 
         self._circuit = circuit
         return circuit
@@ -166,7 +171,8 @@ class ASP(MinimumEigensolver):
     def _set_default_initial_operator(self) -> None:
         self._initial_operator = X ^ (I ^ (self.num_qubits - 1))
         for i in range(1, self.num_qubits):
-            self._initial_operator += (I ^ i) ^ X ^ (I ^ (self.num_qubits - i - 1))
+            self._initial_operator += (I ^ i) ^ X ^ (I ^
+                                                     (self.num_qubits - i - 1))
 
     def compute_minimum_eigenvalue(
         self,

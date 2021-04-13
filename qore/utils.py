@@ -52,12 +52,13 @@ def measure_operator(
 
     if expectation is None:
         expectation = PauliExpectation()
-        
+
     return (
         CircuitSampler(quantum_instance)
         .convert(
             expectation.convert(
-                StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
+                StateFn(H, is_measurement=True).compose(
+                    CircuitStateFn(circuit))
             )
         )
         .eval()

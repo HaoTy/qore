@@ -16,7 +16,7 @@ from qiskit.opflow.primitive_ops.primitive_op import PrimitiveOp
 from qiskit.utils import QuantumInstance
 from qiskit.providers import Backend, BaseBackend
 
-from qore.utils import get_bitstring_probabilities, single_qubit_pauli, null_operator
+from qore.utils import get_bitstring_probabilities, single_qubit_pauli, null_operator, measure_operator
 
 
 class ASP(MinimumEigensolver):
@@ -193,8 +193,11 @@ class ASP(MinimumEigensolver):
             )
         self._operator = operator
         self._ret = MinimumEigensolverResult()
+        circ = self._construct_circuit()
         self._ret.eigenstate = get_bitstring_probabilities(
-            self._construct_circuit(), self.quantum_instance
+            circ, self.quantum_instance
         )
-        # self._ret.eigenvalue =  TODO: implement expectation construction and eigenvalue calculation
+        if aux_operators is not None:
+            self._ret.aux_operator_eigenvalues = [measure_operator(op, circ, self.quantum_instance) for op in aux_operators]
+        self._ret.eigenvalue =  measure_operator(operator, circ, self.quantum_instance)
         return self._ret

@@ -1,4 +1,4 @@
-from time import time
+from time import time, perf_counter
 from typing import Any, Optional, Union
 
 
@@ -10,6 +10,7 @@ class Benchmark:
         printout: Optional[bool] = True,
         reps: Optional[int] = 1,
         profile_time: Optional[bool] = True,
+        time_profiler: Optional[str] = 'cProfile',
         profile_memory: Optional[bool] = True,
         activate: Optional[bool] = True,
         additional_info: Optional[dict] = {},
@@ -21,6 +22,7 @@ class Benchmark:
         self.reps = reps
         self.profile_time = profile_time
         self.profile_memory = profile_memory
+        self.time_profiler = time_profiler.lower()
         self.data = {}
         self.update_data(additional_info)
         self.result = None
@@ -33,26 +35,37 @@ class Benchmark:
                 tracemalloc.start()
 
             if self.profile_time:
-                import cProfile
-
-                self.pr = cProfile.Profile()
-                self.pr.enable()
-            self.start_time = time()
+                if self.time_profiler == 'cprofile':
+                    import cProfile
+                    self.profiler = cProfile.Profile()
+                    self.profiler.enable()
+                elif self.time_profiler == 'pyinstrument':
+                    from pyinstrument import Profiler
+                    self.profiler = Profiler()
+                    self.profiler.start()
+            self.start_time = perf_counter()
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         if self.activate:
-            duration = time() - self.start_time
+            duration = perf_counter() - self.start_time
             if self.profile_time:
-                self.pr.disable()
-                if self.printout:
-                    import pstats
-                    from io import StringIO
+                if self.time_profiler == 'cprofile':
+                    self.profiler.disable()
 
-                    s = StringIO()
-                    ps = pstats.Stats(self.pr, stream=s)
-                    ps.sort_stats("cumtime").print_stats(15)
-                    ps.sort_stats("tottime").print_stats(15)
-                    print(s.getvalue(), flush=True)
+                    if self.printout:
+                        import pstats
+                        from io import StringIO
+
+                        s = StringIO()
+                        ps = pstats.Stats(self.pr, stream=s)
+                        ps.sort_stats("cumtime").print_stats(25)
+                        ps.sort_stats("tottime").print_stats(25)
+                        print(s.getvalue(), flush=True)
+
+                elif self.time_profiler == 'pyinstrument':
+                    self.profiler.stop()
+                    if self.printout:
+                        print(self.profiler.output_text(unicode=True, color=True))
 
             if self.profile_memory:
                 import tracemalloc

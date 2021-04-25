@@ -315,6 +315,7 @@ class Mine(BaseMine):
 
 class SubMine(BaseMine):
     def __init__(self, mine: Mine, node_list: List) -> None:
+        super.__init__()
         self.node_list = node_list
         self.nqubits = len(self.node_list)
         self.node_c = {}  # key: a node in this frag, value: child node in another frag

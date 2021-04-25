@@ -1,18 +1,16 @@
 import numpy as np
-from typing import Union, Optional
-from qiskit import QuantumRegister, ClassicalRegister, execute
+from typing import Optional
 from qiskit.utils.quantum_instance import QuantumInstance
-from qiskit.providers.aer import QasmSimulator
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.quantum_info import Pauli
 from qiskit.opflow import (
     PauliOp,
     OperatorBase,
-    PauliExpectation,
     CircuitSampler,
     StateFn,
     CircuitStateFn,
     ExpectationBase,
+    ExpectationFactory,
 )
 
 
@@ -51,7 +49,7 @@ def measure_operator(
 ) -> float:
 
     if expectation is None:
-        expectation = PauliExpectation()
+        expectation = ExpectationFactory.build(H, quantum_instance)
 
     return (
         CircuitSampler(quantum_instance)
@@ -74,10 +72,8 @@ def get_bitstring_probabilities(
 
     if quantum_instance.is_statevector:
         return {
-            format(k, f"0{circuit.num_qubits}b"): v
-            for k, v in enumerate(
-                np.square(result.get_statevector(circuit)).real
-            )
+            format(k, f"0{circuit.num_qubits + 2}b")[2:]: v
+            for k, v in enumerate(np.square(result.get_statevector(circuit)).real)
         }
 
     return {

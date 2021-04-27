@@ -196,10 +196,9 @@ class Mine(BaseMine):
         """
         state_fn = (-self.Hs @ (Plus ^ self.nqubits)
                     ).reduce().eval().to_dict_fn()
-        self.valid_configs = set(
-            [int(k, 2) for k, v in state_fn.primitive.items() if abs(v) < 1e-8])
+        self.valid_configs = [int(k, 2) for k, v in state_fn.primitive.items() if abs(v) < 1e-8]
         p_op = np.zeros((2 ** self.nqubits))
-        p_op[np.array(list(self.valid_configs), dtype=int)] = 1
+        p_op[np.array(self.valid_configs, dtype=int)] = 1
         p_op = MatrixOp(np.diag(p_op))
 
         return (p_op @ -self.Hp @ p_op).reduce().to_matrix_op()

@@ -2,6 +2,7 @@
 
 __docformat__ = "reStructuredText"
 
+from functools import reduce
 from typing import List, Dict, Optional, Union, Callable
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -97,7 +98,8 @@ class Mine(BaseMine):
         """Plot the mine configuration."""
         x = PrettyTable([" "] + [str(ic) for ic in range(self.cols)])
         for ir in range(self.rows):
-            x.add_row([ir] + ["%.3f" % self.dat[ir, ic] for ic in range(self.cols)])
+            x.add_row([ir] + ["%.3f" % self.dat[ir, ic]
+                      for ic in range(self.cols)])
         print(str(x))
 
     def plot_mine_graph(
@@ -168,7 +170,7 @@ class Mine(BaseMine):
 
         :math:`H=-H_{p}+\gamma H_{s}`
 
-        Parameters
+        Parameter   s
         ----------
         penalty : float
             Penalty for the smoothness term in the Hamiltonian.
@@ -184,15 +186,22 @@ class Mine(BaseMine):
         return self.gen_projected_Hamiltonian()
 
     def gen_projected_Hamiltonian(self) -> PauliOp:
-        self.valid_configs = set(range(2 ** self.nqubits)) - set(
-            int(k, 2)
-            for k in (-self.Hs @ (Plus ^ self.nqubits))
-            # .to_matrix_op()
-            .reduce().eval().sample(shots=2 ** (self.nqubits + 6)).keys()
-        )
+        """Generate the profit Hamiltonian projected onto valid states.
+
+        Returns
+        ----------
+        qiskit.opflow.PauliOp
+            :math:`H=-PH_{p}P`
+
+        """
+        state_fn = (-self.Hs @ (Plus ^ self.nqubits)
+                    ).reduce().eval().to_dict_fn()
+        self.valid_configs = set(
+            [int(k, 2) for k, v in state_fn.primitive.items() if abs(v) < 1e-8])
         p_op = np.zeros((2 ** self.nqubits))
         p_op[np.array(list(self.valid_configs), dtype=int)] = 1
         p_op = MatrixOp(np.diag(p_op))
+
         return (p_op @ -self.Hp @ p_op).reduce().to_matrix_op()
 
     def gen_pseudoflow_graph(self, MAX_FLOW: int) -> tuple[nx.DiGraph, int, int]:
@@ -312,7 +321,8 @@ class Mine(BaseMine):
                 self._ret = MiningProblemResult()
                 if isinstance(algorithm, NumPyMinimumEigensolver):
                     self._ret.optimal_config = format(
-                        np.argwhere(res.eigenstate.primitive.data.real == 1.0).item(),
+                        np.argwhere(
+                            res.eigenstate.primitive.data.real == 1.0).item(),
                         f"0{self.nqubits + 2}b",
                     )[2:]
                     self._ret.optimal_config_prob = 1.0
@@ -362,8 +372,10 @@ class SubMine(BaseMine):
 
     def _init_nodes(self, mine: Mine) -> None:
         for idx, i in enumerate(self.node_list):
-            self.node_c[i] = [j for j in mine.graph[i] if j not in self.node_list]
-            self.node_p[i] = [j for j in mine.graph_r[i] if j not in self.node_list]
+            self.node_c[i] = [j for j in mine.graph[i]
+                              if j not in self.node_list]
+            self.node_p[i] = [j for j in mine.graph_r[i]
+                              if j not in self.node_list]
             if len(self.node_c[i]) + len(self.node_p[i]) > 0:
                 self.node_bd.append(idx)
                 self.zb.append(single_qubit_pauli("z", idx, self.nqubits))
@@ -412,7 +424,8 @@ class SubMine(BaseMine):
     ) -> "MiningProblemResult":
         if isinstance(algorithm, MinimumEigensolver):
             res = algorithm.compute_minimum_eigenvalue(
-                self.gen_Hamiltonian(penalty, z_val), self.zb + [self.Hp, self.Hs]
+                self.gen_Hamiltonian(
+                    penalty, z_val), self.zb + [self.Hp, self.Hs]
             )
             self._ret = MiningProblemResult()
             self._ret.optimal_config, self._ret.optimal_config_prob = max(
@@ -451,7 +464,7 @@ class SubMine(BaseMine):
                               if j not in self.node_list]
             if len(self.node_c[i]) + len(self.node_p[i]) > 0:
                 self.node_bd.append(idx)
-                self.zb.append(single_qubit_pauli('z', idx, self.nqubits)) 
+                self.zb.append(single_qubit_pauli('z', idx, self.nqubits))
 
     def gen_Hs(self, mine: Mine) -> PauliOp:
         Hs = null_operator(self.nqubits)
@@ -496,7 +509,8 @@ class SubMine(BaseMine):
     ) -> "MiningProblemResult":
         if isinstance(algorithm, MinimumEigensolver):
             res = algorithm.compute_minimum_eigenvalue(
-                self.gen_Hamiltonian(penalty, z_val), self.zb + [self.Hp, self.Hs]
+                self.gen_Hamiltonian(
+                    penalty, z_val), self.zb + [self.Hp, self.Hs]
             )
             self._ret = MiningProblemResult()
             self._ret.optimal_config, self._ret.optimal_config_prob = max(
@@ -560,4 +574,3 @@ class MiningProblemResult(AlgorithmResult):
     @expected_violation.setter
     def expected_violation(self, expected_violation: float) -> None:
         self._expected_violation = expected_violation
-

@@ -1,8 +1,9 @@
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from qiskit.utils.quantum_instance import QuantumInstance
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.quantum_info import Pauli
+from qiskit.providers import Backend, BaseBackend, aer
 from qiskit.opflow import (
     PauliOp,
     OperatorBase,
@@ -55,8 +56,7 @@ def measure_operator(
         CircuitSampler(quantum_instance)
         .convert(
             expectation.convert(
-                StateFn(H, is_measurement=True).compose(
-                    CircuitStateFn(circuit))
+                StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
             )
         )
         .eval()
@@ -65,8 +65,15 @@ def measure_operator(
 
 
 def get_bitstring_probabilities(
-    circuit: QuantumCircuit, quantum_instance: QuantumInstance
+    circuit: QuantumCircuit,
+    quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
 ) -> dict:
+
+    if quantum_instance is None:
+        quantum_instance = aer.QasmSimulator(method="statevector")
+
+    if not isinstance(quantum_instance, QuantumInstance):
+        quantum_instance = QuantumInstance(quantum_instance)
 
     result = quantum_instance.execute(circuit.measure_all(inplace=False))
 

@@ -157,7 +157,7 @@ class ASP(MinimumEigensolver):
                 list(range(self.num_qubits)),
             )
             if self._callback and i % self._callback_freq == 0:
-                self._callback(circuit)
+                self._callback(circuit, i)
 
         self._circuit = circuit
         return circuit

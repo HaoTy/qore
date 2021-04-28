@@ -10,7 +10,7 @@ class Benchmark:
         printout: Optional[bool] = True,
         reps: Optional[int] = 1,
         profile_time: Optional[bool] = True,
-        time_profiler: Optional[str] = 'cProfile',
+        time_profiler: Optional[str] = 'pyinstrument',
         profile_memory: Optional[bool] = True,
         activate: Optional[bool] = True,
         additional_info: Optional[dict] = {},
@@ -57,7 +57,7 @@ class Benchmark:
                         from io import StringIO
 
                         s = StringIO()
-                        ps = pstats.Stats(self.pr, stream=s)
+                        ps = pstats.Stats(self.profiler, stream=s)
                         ps.sort_stats("cumtime").print_stats(25)
                         ps.sort_stats("tottime").print_stats(25)
                         print(s.getvalue(), flush=True)

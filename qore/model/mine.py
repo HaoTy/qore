@@ -370,6 +370,7 @@ class Mine(BaseMine):
             else:
                 raise ValueError()
 
+            print(f"The most probable configuration and the corresponding probability: {self._ret.optimal_config, self._ret.optimal_config_prob}")
             self.plot_mine_state(self._ret.optimal_config)
             return self._ret
 

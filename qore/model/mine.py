@@ -76,6 +76,15 @@ class Mine(BaseMine):
         self.Hs = self.gen_Hs()
         self.Hp = self.gen_Hp()
 
+    @staticmethod
+    def gen_random_mine(size: tuple[int, int], distribution: Optional[str] = "normal", **kwargs) -> "Mine":
+        distribution = distribution.lower()
+        if distribution == "gaussian" or distribution == "normal":
+            return Mine(np.random.normal(size=size, **kwargs))
+        if distribution == "uniform":
+            return Mine(np.random.uniform(size=size, **kwargs))
+        raise ValueError("Distribution not supported.")
+
     def _init_mapping(self) -> None:
         """Assign a unique id to each valid node and store the graph structure with ``self.graph``."""
         for r in range(self.rows):
@@ -163,7 +172,7 @@ class Mine(BaseMine):
             )
         return 0.5 * Hp
 
-    def gen_Hamiltonian(self, penalty: Union[float, None]) -> PauliOp:
+    def gen_Hamiltonian(self, penalty: Union[float, bool, None]) -> PauliOp:
         """Generate the Hamiltonian with penalty weight :math:`\gamma`.
 
         :math:`H=-H_{p}+\gamma H_{s}`
@@ -179,6 +188,8 @@ class Mine(BaseMine):
             Hamiltonian with penalty weight :math:`\gamma`.
 
         """
+        if penalty is True:
+            penalty = self.heuristic_penalty()
         if penalty:
             return (-self.Hp + penalty * self.Hs).reduce()
         return self.gen_projected_Hamiltonian()
@@ -293,10 +304,18 @@ class Mine(BaseMine):
                 res += 0.25 * (1.0 - dig[i]) * (1.0 + dig[j])
         return int(res)
 
+    def heuristic_penalty(self, coeff: float = 3.8) -> float:
+        return (
+            float(
+                np.linalg.norm(np.where(self.dat.flat != np.inf), ord=2) / self.nqubits
+            )
+            * coeff
+        )
+
     def solve(
         self,
         algorithm: Union[MinimumEigensolver, Pseudoflow],
-        penalty: Union[float, None] = None,
+        penalty: Union[float, bool, None] = None,
         benchmark: Union[Benchmark, bool, None] = None,
     ) -> "MiningProblemResult":
         if benchmark is True:

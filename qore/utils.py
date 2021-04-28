@@ -55,7 +55,8 @@ def measure_operator(
         CircuitSampler(quantum_instance)
         .convert(
             expectation.convert(
-                StateFn(H, is_measurement=True).compose(CircuitStateFn(circuit))
+                StateFn(H, is_measurement=True).compose(
+                    CircuitStateFn(circuit))
             )
         )
         .eval()

@@ -80,6 +80,8 @@ def analysis(circ, iter):
     x = get_bitstring_probabilities(circ, algorithm.quantum_instance)
     bitstr, prob = max(x.items(), key=lambda item: item[1])
     print(f"The most probable configuration and the corresponding probability: {bitstr, prob}")
+    qmine.plot_mine_state(bitstr)
+
 
 algorithm = ASP(
     evol_time=10,
@@ -194,9 +196,4 @@ result = qmine.solve(algorithm,
 
 # %%
 result = qmine.solve(ASP(10, 20))
-
-
-# %%
-
-
 

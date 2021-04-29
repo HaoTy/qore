@@ -3,7 +3,7 @@
 __docformat__ = "reStructuredText"
 
 from functools import reduce
-from typing import List, Dict, Optional, Union, Callable
+from typing import List, Dict, Optional, Union, Callable, Tuple
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
@@ -78,7 +78,7 @@ class Mine(BaseMine):
         self.Hp = self.gen_Hp()
 
     @staticmethod
-    def gen_random_mine(size: tuple[int, int], distribution: Optional[str] = "normal", **kwargs) -> "Mine":
+    def gen_random_mine(size: Tuple[int, int], distribution: Optional[str] = "normal", **kwargs) -> "Mine":
         distribution = distribution.lower()
         if distribution == "gaussian" or distribution == "normal":
             return Mine(np.random.normal(size=size, **kwargs))

@@ -3,7 +3,7 @@
 See https://arxiv.org/pdf/quant-ph/0001106.pdf
 """
 
-from typing import Optional, Dict, Callable, List, Union
+from typing import Optional, Callable, List, Union
 from qiskit.providers.aer import QasmSimulator
 from qiskit.circuit import QuantumCircuit
 from qiskit.opflow import OperatorBase, X, I, Minus
@@ -12,11 +12,10 @@ from qiskit.algorithms import (
     MinimumEigensolverResult,
     AlgorithmError,
 )
-from qiskit.opflow.primitive_ops.primitive_op import PrimitiveOp
 from qiskit.utils import QuantumInstance
 from qiskit.providers import Backend, BaseBackend
 
-from qore.utils import get_bitstring_probabilities, single_qubit_pauli, null_operator, measure_operator
+from qore.utils import get_bitstring_probabilities, measure_operator
 
 
 class ASP(MinimumEigensolver):
@@ -36,8 +35,7 @@ class ASP(MinimumEigensolver):
         # include_custom: bool = False,
         callback: Optional[Callable[[QuantumCircuit, int], None]] = None,
         callback_freq: Optional[int] = 1,
-        quantum_instance: Optional[Union[QuantumInstance,
-                                         BaseBackend, Backend]] = None,
+        quantum_instance: Optional[Union[QuantumInstance, BaseBackend, Backend]] = None,
     ) -> None:
         """
         Initialize the Adiabatic State Preparation algorithm.
@@ -48,13 +46,19 @@ class ASP(MinimumEigensolver):
             Time for the adiabatic evolution.
         nsteps: int
             Number of discrete time blocks for Trotterization.
-            Make sure that evol_time / nsteps * || H_P - H_B || << 1.
+            Make sure that :math:`evol_time / nsteps * || H_P - H_B || << 1`,
+            where `H_P` is the problem Hamiltonian that will be passed into
+            `compute_minimum_eigenvalue()` and `H_B` is the initial Hamiltonian.
         initial_state: qiskit.circuit.QuantumCircuit, optional
-            The easily constructable initial state. Should be the ground state of H_B.
+            The easily constructable initial state. Should be the ground state
+            of the initial_operator H_B.
         initial_operator : qiskit.opflow.OperatorBase, optional
-            The initial Hamiltonian. Should have a simple-to-find ground state.
+            The initial Hamiltonian H_B. Should have a simple-to-find ground state.
         callback: callable, optional
-            A callback function that has access to the partially built circuit at each time step.
+            A callback function that has access to the partially built circuit
+            at each time step. Should accept the circuit (`qiskit.circuit.QuantumCircuit`)
+            as the first parameter and the current iteration (`int`) as the
+            second parameter.
         callback_freq: int, optional
             The frequency in which the callback function is called.
         """
@@ -68,7 +72,7 @@ class ASP(MinimumEigensolver):
         if quantum_instance:
             self.quantum_instance = quantum_instance
         else:
-            backend = QasmSimulator(method='statevector')
+            backend = QasmSimulator(method="statevector")
             self.quantum_instance = QuantumInstance(backend)
         self.evol_time = evol_time
         self.nsteps = nsteps
@@ -86,13 +90,14 @@ class ASP(MinimumEigensolver):
 
     @property
     def initial_state(self) -> QuantumCircuit:
-        return self._evol_time
+        return self._initial_state
 
     @initial_state.setter
     def initial_state(self, initial_state: QuantumCircuit) -> None:
         if initial_state and not self._check_num_qubits(initial_state.num_qubits):
             raise AlgorithmError(
-                "The number of qubits of the initial state does not match the initial operator."
+                "The number of qubits of the initial state does not match the "
+                "initial operator."
             )
         self._initial_state = initial_state
 
@@ -104,25 +109,26 @@ class ASP(MinimumEigensolver):
     def initial_operator(self, initial_operator: OperatorBase) -> None:
         if initial_operator and not self._check_num_qubits(initial_operator.num_qubits):
             raise AlgorithmError(
-                "The number of qubits of the initial operator does not match the initial state."
+                "The number of qubits of the initial operator does not match "
+                "the initial state."
             )
         self._initial_operator = initial_operator
 
-    # @property
-    # def evol_time(self) -> float:
-    #     return self._evol_time
+    @property
+    def evol_time(self) -> float:
+        return self._evol_time
 
-    # @evol_time.setter
-    # def evol_time(self, evol_time: float) -> None:
-    #     self._evol_time = evol_time
+    @evol_time.setter
+    def evol_time(self, evol_time: float) -> None:
+        self._evol_time = evol_time
 
-    # @property
-    # def nsteps(self) -> int:
-    #     return self._nsteps
+    @property
+    def nsteps(self) -> int:
+        return self._nsteps
 
-    # @nsteps.setter
-    # def nsteps(self, nsteps: int) -> None:
-    #     self._nsteps = nsteps
+    @nsteps.setter
+    def nsteps(self, nsteps: int) -> None:
+        self._nsteps = nsteps
 
     @property
     def quantum_instance(self) -> Optional[QuantumInstance]:
@@ -171,14 +177,37 @@ class ASP(MinimumEigensolver):
     def _set_default_initial_operator(self) -> None:
         self._initial_operator = X ^ (I ^ (self.num_qubits - 1))
         for i in range(1, self.num_qubits):
-            self._initial_operator += (I ^ i) ^ X ^ (I ^
-                                                     (self.num_qubits - i - 1))
+            self._initial_operator += (I ^ i) ^ X ^ (I ^ (self.num_qubits - i - 1))
 
     def compute_minimum_eigenvalue(
         self,
         operator: OperatorBase,
         aux_operators: Optional[List[Optional[OperatorBase]]] = None,
     ) -> MinimumEigensolverResult:
+        """
+        Computes minimum eigenvalue. Operator and aux_operators can be supplied here and
+        if not None will override any already set into algorithm so it can be reused with
+        different operators. While an operator is required by algorithms, aux_operators
+        are optional. To 'remove' a previous aux_operators array use an empty list here.
+
+        Args:
+            operator: qiskit.opflow.OperatorBase
+                The problem Hamiltonian `H_P`.
+            aux_operators: List[qiskit.opflow.OperatorBase], optional
+                Optional list of auxiliary operators to be evaluated with the
+                eigenstate of the minimum eigenvalue main result and their expectation values
+                returned. For instance in chemistry these can be dipole operators, total particle
+                count operators so we can get values for these at the ground state.
+
+        Returns:
+            MinimumEigensolverResult
+
+        Raises:
+            AlgorithmError:
+                If no quantum instance has been provided or the number of qubits
+                of the operator does not match the initial state or the initial
+                operator.
+        """
         super().compute_minimum_eigenvalue(operator, aux_operators)
 
         if self.quantum_instance is None:
@@ -189,15 +218,17 @@ class ASP(MinimumEigensolver):
 
         if not self._check_num_qubits(operator.num_qubits):
             raise AlgorithmError(
-                "The number of qubits of the operator does not match the initial state or the initial operator."
+                "The number of qubits of the operator does not match the initial"
+                " state or the initial operator."
             )
         self._operator = operator
         self._ret = MinimumEigensolverResult()
         circ = self._construct_circuit()
-        self._ret.eigenstate = get_bitstring_probabilities(
-            circ, self.quantum_instance
-        )
-        if aux_operators is not None:
-            self._ret.aux_operator_eigenvalues = [measure_operator(op, circ, self.quantum_instance) for op in aux_operators]
-        self._ret.eigenvalue =  measure_operator(operator, circ, self.quantum_instance)
+        self._ret.eigenstate = get_bitstring_probabilities(circ, self.quantum_instance)
+        # if aux_operators is not None:
+        #     self._ret.aux_operator_eigenvalues = [
+        #         measure_operator(op, circ, self.quantum_instance)
+        #         for op in aux_operators
+        #     ]
+        # self._ret.eigenvalue = measure_operator(operator, circ, self.quantum_instance)
         return self._ret

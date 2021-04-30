@@ -15,7 +15,7 @@ from qiskit.algorithms import (
 from qiskit.utils import QuantumInstance
 from qiskit.providers import Backend, BaseBackend
 
-from qore.utils import get_bitstring_probabilities, measure_operator
+from qore.utils import measure_operator
 
 
 class ASP(MinimumEigensolver):
@@ -223,12 +223,25 @@ class ASP(MinimumEigensolver):
             )
         self._operator = operator
         self._ret = MinimumEigensolverResult()
-        circ = self._construct_circuit()
-        self._ret.eigenstate = get_bitstring_probabilities(circ, self.quantum_instance)
-        # if aux_operators is not None:
-        #     self._ret.aux_operator_eigenvalues = [
-        #         measure_operator(op, circ, self.quantum_instance)
-        #         for op in aux_operators
-        #     ]
-        # self._ret.eigenvalue = measure_operator(operator, circ, self.quantum_instance)
+        circuit = self._construct_circuit()
+
+        if self._quantum_instance.is_statevector:
+            self._ret.eigenstate = self._quantum_instance.execute(
+                circuit
+            ).get_statevector(circuit)
+        else:
+            result = self._quantum_instance.execute(circuit.measure_all(inplace=False))
+            self._ret.eigenstate = {
+                k: (v / self._quantum_instance.run_config.shots) ** 0.5
+                for k, v in result.get_counts().items()
+            }
+
+        if aux_operators is not None:
+            self._ret.aux_operator_eigenvalues = [
+                measure_operator(op, circuit, self._quantum_instance)
+                for op in aux_operators
+            ]
+        self._ret.eigenvalue = measure_operator(
+            operator, circuit, self._quantum_instance
+        )
         return self._ret

@@ -63,6 +63,9 @@ def measure_operator(
         .real
     )
 
+def int_to_bitstr(x: int, n: int):
+    return format(x, f"0{n + 2}b")[2:]
+
 
 def get_bitstring_probabilities(
     circuit: QuantumCircuit,
@@ -78,9 +81,10 @@ def get_bitstring_probabilities(
     result = quantum_instance.execute(circuit.measure_all(inplace=False))
 
     if quantum_instance.is_statevector:
+        statevector = result.get_statevector(circuit)
         return {
-            format(k, f"0{circuit.num_qubits + 2}b")[2:]: v
-            for k, v in enumerate(np.square(result.get_statevector(circuit)).real)
+            int_to_bitstr(k, circuit.num_qubits): v
+            for k, v in enumerate(statevector * statevector.conj())
         }
 
     return {

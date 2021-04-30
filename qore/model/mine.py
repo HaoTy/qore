@@ -20,7 +20,7 @@ from qiskit.algorithms import (
 
 from ..algorithms import Pseudoflow
 from ..benchmark import Benchmark
-from ..utils import null_operator, z_projector, single_qubit_pauli
+from ..utils import null_operator, z_projector, single_qubit_pauli, int_to_bitstr
 
 
 class BaseMine(ABC):
@@ -349,16 +349,28 @@ class Mine(BaseMine):
                     self._ret.optimal_config_prob = 1.0
 
                 else:
-                    self._ret.optimal_config, self._ret.optimal_config_prob = max(
-                        (
-                            item
-                            for item in res.eigenstate.items()
-                            if self.valid_configs is None
-                            or int(item[0], 2) in self.valid_configs
-                        ),
-                        key=lambda item: item[1],
-                    )
-                    self._ret.optimal_config_prob **= 2
+                    if isinstance(res.eigenstate, dict):
+                        self._ret.optimal_config, self._ret.optimal_config_prob = max(
+                            (
+                                item
+                                for item in res.eigenstate.items()
+                                if self.valid_configs is None
+                                or int(item[0], 2) in self.valid_configs
+                            ),
+                            key=lambda item: item[1],
+                        )
+                    elif isinstance(res.eigenstate, np.ndarray):
+                        idx = np.argmax(res.eigenstate * res.eigenstate.conj())
+                        self._ret.optimal_config = int_to_bitstr(idx, self.nqubits)
+                        self._ret.optimal_config_prob = res.eigenstate[idx]
+
+                    if isinstance(self._ret.optimal_config_prob, complex):
+                        self._ret.optimal_config_prob = (
+                            self._ret.optimal_config_prob.real ** 2
+                            - self._ret.optimal_config_prob.imag ** 2
+                        )
+                    else:
+                        self._ret.optimal_config_prob **= 2
 
                 self._ret.ground_state = res.eigenstate
                 if (

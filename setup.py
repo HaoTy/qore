@@ -15,6 +15,9 @@ setup(
         'prettytable>=2.1.0',
         'pseudoflow>=1.15.0',
         'pyinstrument>=3.4',
+        'matplotlib>=3.4',
+        'tensorbackends @ https://github.com/cyclops-community/tensorbackends/archive/master.tar.gz',
+        'koala @ https://github.com/cyclops-community/koala/archive/master.tar.gz',
     ],
     # test_suite='test.test',
 )

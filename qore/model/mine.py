@@ -18,7 +18,7 @@ from qiskit.algorithms import (
     NumPyMinimumEigensolver,
 )
 
-from ..algorithms import Pseudoflow
+from ..algorithms import Pseudoflow, PEPSITE
 from ..benchmark import Benchmark
 from ..utils import null_operator, z_projector, single_qubit_pauli, int_to_bitstr
 
@@ -400,15 +400,11 @@ class Mine(BaseMine):
                 )
                 self._ret.optimal_config_prob = 1.0
 
+            elif isinstance(algorithm, PEPSITE):
+                self._ret.optimal_config = algorithm.run(self)
+                self._ret.optimal_config_prob = 1.0
+                
             else:
-                try:
-                    from ..algorithms import PEPSITE
-                except ImportError:
-                    pass
-                else:
-                    if isinstance(algorithm, PEPSITE):
-                        self._ret.optimal_config = algorithm.run(self)
-                        self._ret.optimal_config_prob = 1.0
                 raise ValueError(f"{type(algorithm)} is not a valid algorithm.")
 
             print(

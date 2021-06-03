@@ -73,9 +73,20 @@ class Mine(BaseMine):
         self._init_mapping()
         self.nqubits: int = len(self.idx2cord)
         self.valid_configs = None
+        self._Hs = None
+        self._Hp = None
 
-        self.Hs = self.gen_Hs()
-        self.Hp = self.gen_Hp()
+    @property
+    def Hs(self) -> float:
+        if self._Hs is None:
+            self._Hs = self.gen_Hs()
+        return self._Hs
+
+    @property
+    def Hp(self) -> float:
+        if self._Hp is None:
+            self._Hp = self.gen_Hp()
+        return self._Hp
 
     @staticmethod
     def gen_random_mine(
@@ -92,6 +103,8 @@ class Mine(BaseMine):
         """Assign a unique id to each valid node and store the graph structure with ``self.graph``."""
         for r in range(self.rows):
             for c in range(self.cols):
+                if c < r or c > self.cols - r - 1:
+                    self.dat[r, c] = float("inf")
                 if self.dat[r, c] < float("inf"):
                     self.idx2cord.append((r, c))
                     self.cord2idx[(r, c)] = len(self.idx2cord) - 1
@@ -334,12 +347,12 @@ class Mine(BaseMine):
             benchmark = Benchmark(activate=False)
 
         with benchmark:
+            self._ret = MiningProblemResult()
 
             if isinstance(algorithm, MinimumEigensolver):
                 res = algorithm.compute_minimum_eigenvalue(
                     self.gen_Hamiltonian(penalty), [self.Hp, self.Hs]
                 )
-                self._ret = MiningProblemResult()
 
                 if isinstance(algorithm, NumPyMinimumEigensolver):
                     self._ret.optimal_config = format(
@@ -382,13 +395,21 @@ class Mine(BaseMine):
                     ) = res.aux_operator_eigenvalues
 
             elif isinstance(algorithm, Pseudoflow):
-                self._ret = MiningProblemResult()
                 self._ret.optimal_config = algorithm.run(
                     *self.gen_pseudoflow_graph(algorithm.MAX_FLOW)
                 )
+                self._ret.optimal_config_prob = 1.0
 
             else:
-                raise ValueError()
+                try:
+                    from ..algorithms import PEPSITE
+                except ImportError:
+                    pass
+                else:
+                    if isinstance(algorithm, PEPSITE):
+                        self._ret.optimal_config = algorithm.run(self)
+                        self._ret.optimal_config_prob = 1.0
+                raise ValueError(f"{type(algorithm)} is not a valid algorithm.")
 
             print(
                 "The most probable configuration and the corresponding probability:"

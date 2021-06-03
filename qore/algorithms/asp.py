@@ -15,7 +15,7 @@ from qiskit.algorithms import (
 from qiskit.utils import QuantumInstance
 from qiskit.providers import Backend, BaseBackend
 
-from qore.utils import measure_operator
+from ..utils import measure_operator
 
 
 class ASP(MinimumEigensolver):
@@ -69,11 +69,11 @@ class ASP(MinimumEigensolver):
         self._circuit = None
         self._ret = None
 
-        if quantum_instance:
-            self.quantum_instance = quantum_instance
-        else:
-            backend = QasmSimulator(method="statevector")
-            self.quantum_instance = QuantumInstance(backend)
+        self.quantum_instance = (
+            quantum_instance
+            if quantum_instance
+            else QasmSimulator(method="statevector")
+        )
         self.evol_time = evol_time
         self.nsteps = nsteps
         self.initial_state = initial_state
@@ -89,7 +89,7 @@ class ASP(MinimumEigensolver):
         return 0
 
     @property
-    def initial_state(self) -> QuantumCircuit:
+    def initial_state(self) -> Optional[QuantumCircuit]:
         return self._initial_state
 
     @initial_state.setter
@@ -102,7 +102,7 @@ class ASP(MinimumEigensolver):
         self._initial_state = initial_state
 
     @property
-    def initial_operator(self) -> OperatorBase:
+    def initial_operator(self) -> Optional[OperatorBase]:
         return self._initial_operator
 
     @initial_operator.setter
@@ -131,7 +131,7 @@ class ASP(MinimumEigensolver):
         self._nsteps = nsteps
 
     @property
-    def quantum_instance(self) -> Optional[QuantumInstance]:
+    def quantum_instance(self) -> QuantumInstance:
         """ Returns quantum instance. """
         return self._quantum_instance
 
@@ -236,12 +236,12 @@ class ASP(MinimumEigensolver):
                 for k, v in result.get_counts().items()
             }
 
-        if aux_operators is not None:
-            self._ret.aux_operator_eigenvalues = [
-                measure_operator(op, circuit, self._quantum_instance)
-                for op in aux_operators
-            ]
-        self._ret.eigenvalue = measure_operator(
-            operator, circuit, self._quantum_instance
-        )
+        # if aux_operators is not None:
+        #     self._ret.aux_operator_eigenvalues = [
+        #         measure_operator(op, circuit, self._quantum_instance)
+        #         for op in aux_operators
+        #     ]
+        # self._ret.eigenvalue = measure_operator(
+        #     operator, circuit, self._quantum_instance
+        # )
         return self._ret

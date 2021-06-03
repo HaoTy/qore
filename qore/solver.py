@@ -7,7 +7,7 @@ from qiskit.providers.aer import QasmSimulator
 from qiskit.algorithms import MinimumEigensolver
 from qiskit.opflow import Minus
 
-from qore import Mine, SubMine, MiningProblemResult
+from .model.mine import Mine, SubMine, MiningProblemResult
 from .utils import measure_operator
 
 

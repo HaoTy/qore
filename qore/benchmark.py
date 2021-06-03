@@ -10,7 +10,7 @@ class Benchmark:
         printout: Optional[bool] = True,
         reps: Optional[int] = 1,
         profile_time: Optional[bool] = True,
-        time_profiler: Optional[str] = 'pyinstrument',
+        time_profiler: Optional[str] = "pyinstrument",
         profile_memory: Optional[bool] = True,
         activate: Optional[bool] = True,
         additional_info: Optional[dict] = {},
@@ -24,6 +24,8 @@ class Benchmark:
         self.profile_memory = profile_memory
         self.time_profiler = time_profiler.lower()
         self.data = {}
+        if name is not None:
+            self.update_data("name", name)
         self.update_data(additional_info)
         self.result = None
 
@@ -35,12 +37,14 @@ class Benchmark:
                 tracemalloc.start()
 
             if self.profile_time:
-                if self.time_profiler == 'cprofile':
+                if self.time_profiler == "cprofile":
                     import cProfile
+
                     self.profiler = cProfile.Profile()
                     self.profiler.enable()
-                elif self.time_profiler == 'pyinstrument':
+                elif self.time_profiler == "pyinstrument":
                     from pyinstrument import Profiler
+
                     self.profiler = Profiler()
                     self.profiler.start()
             self.start_time = perf_counter()
@@ -49,7 +53,7 @@ class Benchmark:
         if self.activate:
             duration = perf_counter() - self.start_time
             if self.profile_time:
-                if self.time_profiler == 'cprofile':
+                if self.time_profiler == "cprofile":
                     self.profiler.disable()
 
                     if self.printout:
@@ -62,7 +66,7 @@ class Benchmark:
                         ps.sort_stats("tottime").print_stats(25)
                         print(s.getvalue(), flush=True)
 
-                elif self.time_profiler == 'pyinstrument':
+                elif self.time_profiler == "pyinstrument":
                     self.profiler.stop()
                     if self.printout:
                         print(self.profiler.output_text(unicode=True, color=True))

@@ -9,10 +9,7 @@ from pseudoflow import hpf
 
 
 class Pseudoflow:
-    def __init__(
-        self,
-        MAX_FLOW: int = 1000000 
-    ) -> None:
+    def __init__(self, MAX_FLOW: int = 1000000) -> None:
         self._MAX_FLOW = MAX_FLOW
 
     @property

@@ -229,7 +229,7 @@ class Mine(BaseMine):
 
         return (p_op @ -self.Hp @ p_op).reduce().to_matrix_op()
 
-    def gen_pseudoflow_graph(self, MAX_FLOW: int) -> tuple[nx.DiGraph, int, int]:
+    def gen_pseudoflow_graph(self, MAX_FLOW: int) -> Tuple[nx.DiGraph, int, int]:
         G = nx.DiGraph()
         G.add_nodes_from(np.arange(self.nqubits))
         source = -1

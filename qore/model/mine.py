@@ -90,13 +90,14 @@ class Mine(BaseMine):
 
     @staticmethod
     def gen_random_mine(
-        size: Tuple[int, int], distribution: Optional[str] = "normal", **kwargs
+        size: Tuple[int, int], distribution: Optional[str] = "normal", seed: Optional[int] = None, **kwargs
     ) -> "Mine":
         distribution = distribution.lower()
+        rng = np.random.default_rng(seed)
         if distribution == "gaussian" or distribution == "normal":
-            return Mine(np.random.normal(size=size, **kwargs))
+            return Mine(rng.normal(size=size, **kwargs))
         if distribution == "uniform":
-            return Mine(np.random.uniform(size=size, **kwargs))
+            return Mine(rng.uniform(size=size, **kwargs))
         raise ValueError("Distribution not supported.")
 
     def _init_mapping(self) -> None:
